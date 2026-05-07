@@ -53,3 +53,6 @@ def get_country_df():
 def get_metadata_df():
     """Läser in metadata med posters, trailers o beskrivningar"""
     return pd.read_csv(DATA_PATH / "DimMetaData_Final.csv")
+
+
+
