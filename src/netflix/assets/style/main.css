@@ -34,7 +34,7 @@ h1, h2, h3, h4 {
 
 /* KPI label - sekunder textfärg */
 [data-testid="stMetricLabel"] {
-    color: #9E9689 !important;
+    color: #F5F0E8 !important;
 }
 
 /* Gör alla poster-bilder lika höga */

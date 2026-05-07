@@ -17,7 +17,7 @@
 
 /* KPI label */
 [data-testid="stMetricLabel"] {
-    color: #9E9689 !important;
+    color: #f5f0e8 !important;
     font-size: 0.9rem !important;
     text-align: center !important;
 }
