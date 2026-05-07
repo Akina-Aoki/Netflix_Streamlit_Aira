@@ -2,18 +2,21 @@ import streamlit as st
 from netflix.utils.helpers import get_global_df, get_metadata_df
 from netflix.utils.helpers import read_css
 from netflix.utils.constants import STYLES_PATH, IMAGE_PATH
+
 import plotly.graph_objects as go
+
 import pandas as pd
 
+st.image(str(IMAGE_PATH / "Logga_Streamly.png"), width=200)
+st.caption("Global Netflix viewing statistics")
+st.divider()
 
 read_css(STYLES_PATH / "insights.css")
+
 
 df_global = get_global_df()
 df_metadata = get_metadata_df()
 
-# st.image(str(IMAGE_PATH / "Logga_Streamly.png"), width=150)
-# st.caption("Global Netflix viewing statistics")
-# st.divider()
 
 st.title("Compare titles")
 st.caption("Select two titles to compare side by side")
@@ -43,10 +46,12 @@ with col_right:
 
 
 def show_poster(meta):
-    """Visar filmpostern om den finns annars felmedalande"""
+    """Visar filmpostern om den finns annars felmeddelande"""
     if meta is not None and str(meta["image"]) != "nan":
-        st.image(meta["image"], width=250)
-
+        st.markdown(
+            f'<img src="{meta["image"]}" style="height:350px; width:250px; object-fit:cover; border-radius:4px;">',
+            unsafe_allow_html=True,
+        )
     else:
         st.caption("Image is not available")
 
@@ -179,7 +184,6 @@ if title_left:
     meta_left = get_metadata(title_left)
     stats_left = get_stats(title_left)
     show_title_card(col_left, title_left, meta_left, stats_left)
-
 
 if title_right:
     meta_right = get_metadata(title_right)
