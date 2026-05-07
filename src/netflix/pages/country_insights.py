@@ -44,7 +44,8 @@ MONTH_ORDER = list(calendar.month_name)[1:]
 def prepare_country_insights_data() -> pd.DataFrame:
     """Load and prepare weekly country-level Top 10 data for this page."""
     df = get_weekly_df().copy()
-
+    
+    # Convert dates and ranks first so later filtering and scoring are reliable.
     df["week"] = pd.to_datetime(df["week"], errors="coerce")
     df["weekly_rank"] = pd.to_numeric(df["weekly_rank"], errors="coerce")
 
@@ -74,8 +75,10 @@ def prepare_country_insights_data() -> pd.DataFrame:
         "Series": "TV",
         "TV": "TV",
     }
+    # Standardize category names so charts can consistently compare Films and TV.
     df["category"] = df["category"].map(category_map).fillna(df["category"])
 
+    # A rank of 1 earns 10 points, rank 10 earns 1 point.
     df["score"] = 11 - df["weekly_rank"]
     df = df[df["score"].notna() & (df["score"] > 0)].copy()
 
@@ -90,12 +93,14 @@ def build_country_top10_chart_df(
     selected_category: str,
 ) -> pd.DataFrame:
     """Return the selected country's top 10 title performance dataframe."""
+    # Apply the snapshot filters before aggregating title scores.
     filtered = df[
         (df["country_name"] == selected_country)
         & (df["year"] == selected_year)
         & (df["month_name"].astype(str) == selected_month)
     ].copy()
 
+    # Sum weekly scores because a title can appear multiple times in one month.
     agg = (
         filtered.groupby(["show_title", "category"], as_index=False)["score"]
         .sum()
@@ -171,6 +176,7 @@ def build_heatmap_df(
     if not top_titles:
         return pd.DataFrame(), title_df
 
+    # Recalculate those selected titles across every country for comparison.
     title_scores_by_country = (
         period_df[period_df["show_title"].isin(top_titles)]
         .groupby(["country_name", "show_title"], as_index=False)["score"]
@@ -178,6 +184,7 @@ def build_heatmap_df(
         .rename(columns={"score": "performance_score"})
     )
 
+    # Pivot creates the Country × Title matrix used by the heatmap visualization.
     pivot_df = title_scores_by_country.pivot_table(
         index="country_name",
         columns="show_title",
@@ -189,6 +196,7 @@ def build_heatmap_df(
     pivot_df = pivot_df.reindex(columns=top_titles, fill_value=0)
     pivot_df["__total__"] = pivot_df[top_titles].sum(axis=1)
 
+    # Limit rows for readability, but always include the selected country.
     countries_to_keep = (
         pivot_df.sort_values("__total__", ascending=False)
         .head(max_countries)
@@ -309,6 +317,7 @@ def build_title_trend_figure(trend_df: pd.DataFrame, selected_title: str) -> go.
         "Weekly Rank: %{customdata[1]}"
     )
 
+    # Add optional metadata to the hover tooltip only when the dataset has it.
     if "cumulative_weeks_in_top_10" in trend_df.columns:
         hover_fields.append("cumulative_weeks_in_top_10")
         hover_template += "<br>Weeks in Top 10: %{customdata[2]}"
@@ -461,6 +470,7 @@ def render_filters(weekly_df: pd.DataFrame) -> tuple[str, int, str, str]:
         & (weekly_df["year"] == selected_year),
         "month_name",
     ].dropna()
+    # Month choices depend on the selected country and year to avoid empty views.
     available_months = [m for m in MONTH_ORDER if m in set(months_in_data.astype(str))]
 
     with c3:
@@ -488,7 +498,8 @@ def country_insights() -> None:
         title="Country Insights Home",
         subtitle="Explore what each country prefers and compare viewing patterns across markets.",
     )
-
+    
+    # Load cached, cleaned data before building filters and charts.
     weekly_df = prepare_country_insights_data()
     if weekly_df.empty:
         st.warning("No weekly country data is available for Country Insights.")

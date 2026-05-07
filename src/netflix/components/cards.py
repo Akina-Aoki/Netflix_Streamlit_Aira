@@ -7,6 +7,7 @@ CARD_VARIANTS = {"default", "amber", "orange", "green", "red"}
 
 def _variant_class(prefix: str, variant: str) -> str:
     """Return a CSS class suffix for supported card variants."""
+    # Validate the variant so unexpected names do not create missing CSS classes.
     safe_variant = variant if variant in CARD_VARIANTS else "default"
     return f"{prefix}-{safe_variant}"
 

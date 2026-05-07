@@ -1,3 +1,4 @@
+"""Reusable visualization helpers for Streamly pages."""
 import importlib.util
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,6 +19,7 @@ PAGE_COLORS = {
 
 
 def _iso2_to_iso3(iso2_code: str) -> str | None:
+    """Convert a two-letter country code to ISO-3 for Plotly maps."""
     if importlib.util.find_spec("pycountry") is None:
         return None
     
@@ -28,6 +30,7 @@ def _iso2_to_iso3(iso2_code: str) -> str | None:
 
 
 def make_country_choropleth(df: pd.DataFrame, selected_country: str):
+    """Create a world map that highlights the selected country."""
     columns = ["country_name"]
 
     if "country_iso2" in df.columns:
@@ -55,7 +58,7 @@ def make_country_choropleth(df: pd.DataFrame, selected_country: str):
             location_column = "iso3"
             location_mode = "ISO-3"
             custom_data = ["country_name", "country_iso2"]
-
+    # Use a simple 0/1 value so the selected country receives the bright color.
     countries["is_selected"] = (
         countries["country_name"] == selected_country
     ).astype(int)
@@ -101,6 +104,7 @@ GRAY_3 = "#888888"
 
 
 def russia_line_chart():
+    """Render the Russia data drop-off line chart in Streamlit."""
     df = get_country_df()
     df["week"] = pd.to_datetime(df["week"])
 
@@ -118,7 +122,8 @@ def russia_line_chart():
         / world_df["country_name"].nunique()
     )
     world_continue = world_yearly[world_yearly.index <= 2025]
-
+    
+    # Matplotlib is used here because this is a custom annotated story chart.
     fig, ax = plt.subplots(figsize=(8, 5))
 
     fig.patch.set_facecolor("#1A1612")

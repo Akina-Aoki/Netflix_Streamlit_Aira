@@ -12,6 +12,7 @@ def render_streamly_banner(width: int = 200) -> None:
     """Render the Streamly logo, caption, and divider used across pages."""
     logo_path = IMAGE_PATH / STREAMLY_LOGO_FILENAME
 
+    # Fall back to text branding if the image file is not available.
     st.markdown('<div class="streamly-banner">', unsafe_allow_html=True)
     if logo_path.exists():
         st.image(str(logo_path), width=width)

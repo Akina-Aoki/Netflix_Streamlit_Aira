@@ -17,6 +17,7 @@ def load_home_kpis() -> dict:
     df_global = get_global_df().copy()
     df_country = get_country_df().copy()
 
+    # Combine global and country datasets so unique title KPIs use both sources.
     df_combined = pd.concat(
         [
             df_global[["category", "show_title"]],
@@ -28,6 +29,7 @@ def load_home_kpis() -> dict:
     film_categories = {"Movie", "Movies", "Film", "Films"}
     series_categories = {"Serie", "Series", "TV"}
 
+    # Category sets handle small naming differences in the Netflix source files.
     total_films = df_combined[df_combined["category"].isin(film_categories)][
         "show_title"
     ].nunique()

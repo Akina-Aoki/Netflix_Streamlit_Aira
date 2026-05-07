@@ -1,3 +1,9 @@
+"""Success Profile Streamlit page.
+
+This page explains success with simple segments based on popularity and
+longevity in the Netflix country-level Top 10 data.
+"""
+
 import calendar
 
 import pandas as pd
@@ -52,6 +58,7 @@ def prepare_success_profile_data() -> pd.DataFrame:
     if missing_columns:
         return pd.DataFrame({"_missing_columns": [", ".join(sorted(missing_columns))]})
 
+    # Convert source columns to reliable types before filtering and grouping.
     df["week"] = pd.to_datetime(df["week"], errors="coerce")
     df["weekly_rank"] = pd.to_numeric(df["weekly_rank"], errors="coerce")
 
@@ -90,6 +97,7 @@ def _aggregate_success_profile(filtered_df: pd.DataFrame) -> pd.DataFrame:
     if filtered_df.empty:
         return pd.DataFrame()
 
+    # Aggregate weekly rows so each title becomes one point on the chart.
     profile_df = (
         filtered_df.groupby(["show_title", "category"], as_index=False)
         .agg(
@@ -182,6 +190,7 @@ def _aggregate_success_profile(filtered_df: pd.DataFrame) -> pd.DataFrame:
     if result_df.empty:
         return pd.DataFrame()
 
+    # Build a compact label that can be shown next to each selected title.
     result_df["point_label"] = (
         result_df["show_title"].astype(str)
         + "<br>"
@@ -219,6 +228,7 @@ def build_success_profile_data(
     if not strict_df.empty:
         return _aggregate_success_profile(strict_df), "strict"
 
+    # If a month has no rows, keep the page useful by falling back to the year.
     relaxed_df = df[
         (df["country_name"] == country)
         & (df["year"] == year)
@@ -237,6 +247,7 @@ def build_success_profile_figure(profile_df: pd.DataFrame):
     x_axis_max = x_max + 1.2
     y_axis_max = y_max * 1.55 if y_max > 0 else 1
 
+    # Plotly creates the base scatter; later code adds custom labels and arrows.
     fig = px.scatter(
         profile_df,
         x="longevity",
@@ -527,6 +538,7 @@ def success_profile() -> None:
         subtitle="Compare top shows by longevity and popularity.",
     )
 
+    # Story cards teach the viewer how to interpret the dashboard before filtering.
     _render_success_story_cards()
 
     weekly_df = prepare_success_profile_data()
@@ -554,6 +566,7 @@ def success_profile() -> None:
         category,
     )
 
+    # Tell users when the dashboard uses the broader yearly fallback.
     if profile_df.empty:
         st.warning("No data available for the selected filters.")
         render_disclaimer_footer()

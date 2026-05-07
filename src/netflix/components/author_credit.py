@@ -5,6 +5,7 @@ import streamlit as st
 
 def render_author_credit() -> None:
     """Render a compact creator attribution card aligned under page charts."""
+    # Use a narrow column so the credit reads like a small card under content.
     credit_col, _ = st.columns([1, 2])
     with credit_col:
         st.markdown(
