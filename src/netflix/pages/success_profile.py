@@ -15,6 +15,7 @@ from netflix.components.branding import render_page_header, render_streamly_bann
 from netflix.components.cards import render_story_card
 from netflix.components.filters import render_labeled_selectbox
 from netflix.components.footer import render_disclaimer_footer
+from netflix.components.visuals import render_country_reach_section
 from netflix.utils.constants import STYLES_PATH
 from netflix.utils.helpers import get_weekly_df, read_css
 
@@ -580,6 +581,9 @@ def success_profile() -> None:
 
     fig = build_success_profile_figure(profile_df)
     st.plotly_chart(fig, use_container_width=True)
+
+    scatter_titles = profile_df["show_title"].dropna().astype(str).tolist()
+    render_country_reach_section(visible_titles=scatter_titles)
 
     render_author_credit()
     render_disclaimer_footer()
