@@ -91,6 +91,7 @@ def prepare_country_reach_data(
 
     return filtered_df, len(country_names), country_names
 
+
 @st.cache_data
 def get_metadata_df():
     """Läser in metadata med posters, trailers o beskrivningar"""
