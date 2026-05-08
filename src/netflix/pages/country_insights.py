@@ -444,7 +444,26 @@ def render_section_heading(title: str, subtitle: str) -> None:
         unsafe_allow_html=True,
     )
 
+def render_section_divider() -> None:
+    """Render a visual separator before the Country Insights chart section."""
+    st.markdown(
+        '<div class="country-home-section-divider" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
 
+
+def build_filter_context_title(
+    selected_country: str,
+    selected_year: int,
+    selected_month: str,
+    selected_category: str,
+) -> str:
+    """Build the main chart title from the active filter context."""
+    title_parts = [selected_country, f"{selected_month} {selected_year}"]
+    if selected_category != "All":
+        title_parts.append(selected_category)
+
+    return " · ".join(str(part) for part in title_parts if part)
 
 def render_filters(weekly_df: pd.DataFrame) -> tuple[str, int, str, str]:
     """Render the Country Insights filter row."""
@@ -494,8 +513,9 @@ def country_insights() -> None:
 
     render_streamly_banner(width=200)
     render_home_summary(show_banner=False)
+    render_section_divider()
     render_page_header(
-        title="Country Insights Home",
+        title="Top 10 Films and Movies Worldwide",
         subtitle="Explore what each country prefers and compare viewing patterns across markets.",
     )
     
@@ -528,19 +548,18 @@ def country_insights() -> None:
         render_disclaimer_footer()
         return
 
-    map_col, donut_col = st.columns([1.15, 1], gap="large")
+    title_context = build_filter_context_title(
+        selected_country,
+        selected_year,
+        selected_month,
+        selected_category,
+    )
+    bar_col, donut_col = st.columns([1.25, 1], gap="large")
 
-    with map_col:
+    with bar_col:
         with st.container(border=True):
-            render_card_header(
-                "Selected Market",
-                "Highlighted country based on the active filters",
-            )
-            map_fig = make_country_choropleth(weekly_df, selected_country)
-            if map_fig is None:
-                st.info("Map data is unavailable for the selected dataset.")
-            else:
-                st.plotly_chart(map_fig, use_container_width=True)
+            render_card_header(title_context)
+            st.plotly_chart(build_top10_bar_figure(top10_df), use_container_width=True)
 
     with donut_col:
         with st.container(border=True):
@@ -569,13 +588,6 @@ def country_insights() -> None:
                     """,
                     unsafe_allow_html=True,
                 )
-
-    with st.container(border=True):
-        render_card_header(
-            "Top 10 Titles",
-            f"{selected_country} · {selected_month} {selected_year}",
-        )
-        st.plotly_chart(build_top10_bar_figure(top10_df), use_container_width=True)
 
     render_section_heading(
         "Title Performance Trend",

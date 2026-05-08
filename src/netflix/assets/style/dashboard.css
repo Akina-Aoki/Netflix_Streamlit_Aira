@@ -368,9 +368,15 @@ label[data-testid="stWidgetLabel"] p {
   border: 1px solid var(--streamly-border);
   border-radius: 16px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
   margin: 1.4rem 0;
-  min-height: 135px;
+  min-height: 150px;
   padding: 1rem 1.05rem;
+  width: 100%;
 }
 
 .home-kpi-card:hover {
@@ -403,6 +409,10 @@ label[data-testid="stWidgetLabel"] p {
   font-family: "Inter", Arial, sans-serif;
   font-size: 0.82rem;
   line-height: 1.35;
+  min-height: 2.25rem;
+}
+.home-kpi-note-empty {
+  visibility: hidden;
 }
 
 .home-about-card {
@@ -414,6 +424,15 @@ label[data-testid="stWidgetLabel"] p {
   border-radius: 18px;
   margin: 1.3rem 0 1.6rem 0;
   padding: 1.25rem 1.35rem;
+}
+
+.country-home-section-divider {
+  background: linear-gradient(90deg, transparent, var(--streamly-orange), var(--streamly-primary), transparent);
+  border-radius: 999px;
+  box-shadow: 0 0 18px rgba(247, 185, 82, 0.22);
+  height: 2px;
+  margin: 2.75rem 0 2.1rem;
+  opacity: 0.9;
 }
 
 .home-about-card-default {
