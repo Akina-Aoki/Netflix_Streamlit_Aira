@@ -22,10 +22,8 @@ read_css(STYLES_PATH / "main.css")
 
 pages = [
     st.Page("pages/country_insights.py", title="🏠Country Insights Home"),
-    st.Page("pages/insights.py", title="⭐Compare Movies and Series"),
     st.Page("pages/success_profile.py", title="⭐ Success Profile"),
-    st.Page("pages/dashboard.py", title="🔎 Russia: A Data Story"),
-    st.Page("pages/charts.py", title="📊 Global Trends"),
+    st.Page("pages/insights.py", title="⭐Compare Movies and Series"),
 ]
 
 pg = st.navigation(pages)
