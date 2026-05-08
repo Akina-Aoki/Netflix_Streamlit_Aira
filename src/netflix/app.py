@@ -7,7 +7,6 @@ import streamlit as st
 from netflix.utils.constants import STYLES_PATH, IMAGE_PATH
 from netflix.utils.helpers import read_css
 
-
 st.set_page_config(
     page_title="Streamly Film Statistics",
     page_icon="🎬",
@@ -19,13 +18,14 @@ read_css(STYLES_PATH / "main.css")
 
 # Detta är om man vill ha en sidebar
 # with st.sidebar:
-#    st.image(str(IMAGE_PATH / "Logga_Streamly.png"), use_container_width=True)
+# st.image(str(IMAGE_PATH / "Logga_Streamly.png"), use_container_width=True)
 
 pages = [
     st.Page("pages/country_insights.py", title="🏠Country Insights Home"),
-    st.Page("pages/insights.py", title="⭐Best Movie and Serie"),
+    st.Page("pages/insights.py", title="⭐Compare Movies and Series"),
     st.Page("pages/success_profile.py", title="⭐ Success Profile"),
     st.Page("pages/dashboard.py", title="🔎 Russia: A Data Story"),
+    st.Page("pages/charts.py", title="📊 Global Trends"),
 ]
 
 pg = st.navigation(pages)

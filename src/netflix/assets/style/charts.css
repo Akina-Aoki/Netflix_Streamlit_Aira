@@ -1,0 +1,113 @@
+/* ---------- Färgvariabler ---------- */
+:root {
+    --bg-primary: #0F0D0B;
+    --bg-secondary: #1A1612;
+    --bg-card: #1A1612;
+    --text-primary: #F5F0E8;
+    --text-secondary: #9E9689;
+    --text-muted: #9E9689;
+    --border-subtle: rgba(42, 33, 24, 0.15);
+    --border-accent: #f7b952;
+}
+
+/* ---------- Global ---------- */
+.stApp {
+    background-color: var(--bg-primary) !important;
+}
+
+.stMainBlockContainer {
+    background-color: var(--bg-primary) !important;
+}
+
+/* ---------- Banner ---------- */
+.streamly-brand-caption {
+    color: var(--text-secondary) !important;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.streamly-divider {
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        var(--border-subtle) 100%
+    ) !important;
+    margin-bottom: 1.5rem;
+}
+
+/* ---------- Divide / Divider ---------- */
+.stDivider {
+    border-color: var(--border-subtle) !important;
+}
+
+/* ---------- Subheader ---------- */
+.stSubheader {
+    color: var(--text-primary) !important;
+    font-size: 1.2rem !important;
+}
+
+/* ---------- Caption ---------- */
+.stCaption {
+    color: var(--text-muted) !important;
+    font-size: 0.8rem !important;
+}
+
+/* ---------- Filter Labels ---------- */
+.streamly-filter-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+/* ---------- Selectbox ---------- */
+.stSelectbox label {
+    color: var(--text-secondary) !important;
+    font-size: 0.85rem !important;
+}
+
+/* ---------- Warning ---------- */
+.stWarning {
+    background: rgba(243, 156, 18, 0.1) !important;
+    border: 1px solid rgba(243, 156, 18, 0.3) !important;
+    border-radius: 6px !important;
+    color: var(--text-primary) !important;
+}
+
+/* ---------- Metric ---------- */
+[data-testid="stMetric"] {
+    background: var(--bg-card);
+    border: 1px solid var(--border-accent);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+[data-testid="stMetricValue"] {
+    color: var(--text-primary) !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    word-break: break-word !important;
+}
+
+[data-testid="stMetricLabel"] {
+    color: var(--text-muted) !important;
+    font-size: 0.65rem !important;
+}
+
+[data-testid="stMetricDelta"] {
+    color: var(--text-secondary) !important;
+    font-size: 0.65rem !important;
+}
+
+/* ---------- Plotly Chart Container ---------- */
+.js-plotly-plot {
+    background: transparent !important;
+}
+
+/* ---------- Rundade hörn på legend ---------- */
+.modebar-container + .legend rect,
+.legend rect {
+    rx: 6px !important;
+    ry: 6px !important;
+}
