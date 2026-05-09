@@ -80,6 +80,29 @@ def format_rating_stars(rating: Any) -> tuple[str, str]:
     stars = "★" * filled_stars + "☆" * (5 - filled_stars)
     return stars, f"{numeric_rating:.1f} / 10"
 
+def get_all_title_profile_options(
+    profile_df: pd.DataFrame | None,
+    global_df: pd.DataFrame | None = None,
+) -> list[str]:
+    """Return all unique titles for the independent title profile selector.
+
+    This helper intentionally reads only full title/profile sources. It must not
+    receive dataframes filtered by the Country Insights home filters.
+    """
+    title_values: list[str] = []
+    for source_df in (profile_df, global_df):
+        if (
+            source_df is None
+            or source_df.empty
+            or "show_title" not in source_df.columns
+        ):
+            continue
+
+        cleaned_titles = source_df["show_title"].dropna().astype(str).str.strip()
+        title_values.extend(title for title in cleaned_titles.tolist() if title)
+
+    unique_titles = {title.casefold(): title for title in title_values}
+    return sorted(unique_titles.values(), key=lambda title: title.casefold())
 
 def get_title_profile_data(
     title: str,
@@ -99,8 +122,11 @@ def get_title_profile_data(
         "cast_members": "",
         "metadata_found": False,
     }
-
-    if metadata_df is not None and not metadata_df.empty and "show_title" in metadata_df.columns:
+    if (
+        metadata_df is not None
+        and not metadata_df.empty
+        and "show_title" in metadata_df.columns
+    ):
         metadata_titles = metadata_df["show_title"].apply(_normalize_title)
         match = metadata_df[metadata_titles == normalized_title]
         if not match.empty:
@@ -152,8 +178,9 @@ def calculate_title_kpis(records_df: pd.DataFrame | None, title: str) -> dict[st
         return empty_kpis
 
     if "weekly_rank" in title_df.columns:
-        title_df["weekly_rank"] = pd.to_numeric(title_df["weekly_rank"], errors="coerce")
-
+        title_df["weekly_rank"] = pd.to_numeric(
+            title_df["weekly_rank"], errors="coerce"
+        )
     if "week" in title_df.columns:
         title_df["week"] = pd.to_datetime(title_df["week"], errors="coerce")
         title_df = title_df.sort_values("week")
@@ -198,14 +225,16 @@ def render_title_hero(profile: dict[str, Any]) -> None:
         profile.get("description") or "No description available for this title."
     )
     genres = format_genres(profile.get("genres"))
-    genre_html = "".join(
-        f'<span class="title-profile-genre-pill">{html.escape(genre)}</span>'
-        for genre in genres
-    ) or '<span class="title-profile-genre-pill muted">Genre unavailable</span>'
-    stars, rating_label = format_rating_stars(profile.get("rating"))
-    rating_html = (
-        f'<span class="title-profile-stars">{stars}</span>' if stars else ""
+    genre_html = (
+        "".join(
+            f'<span class="title-profile-genre-pill">{html.escape(genre)}</span>'
+            for genre in genres
+        )
+        or '<span class="title-profile-genre-pill muted">Genre unavailable</span>'
     )
+    
+    stars, rating_label = format_rating_stars(profile.get("rating"))
+    rating_html = f'<span class="title-profile-stars">{stars}</span>' if stars else ""
     trailer_url = _clean_text(profile.get("trailer"))
     if trailer_url:
         trailer_html = (
@@ -239,11 +268,15 @@ def render_title_hero(profile: dict[str, Any]) -> None:
 
 def render_title_kpi_cards(kpis: dict[str, str]) -> None:
     """Render equal-height KPI cards for one title."""
+
+    def display_kpi_value(value: Any) -> str:
+        """Keep incomplete KPI values user-friendly instead of blank/None."""
+        return "N/A" if _is_missing(value) else str(value)
     cards = [
-        ("Weeks in Top 10", kpis.get("weeks_in_top_10", "N/A")),
-        ("Last Global Rank", kpis.get("last_global_rank", "N/A")),
-        ("Average Global Rank", kpis.get("average_global_rank", "N/A")),
-        ("Best Global Rank", kpis.get("best_global_rank", "N/A")),
+        ("Weeks in Top 10", display_kpi_value(kpis.get("weeks_in_top_10"))),
+        ("Last Global Rank", display_kpi_value(kpis.get("last_global_rank"))),
+        ("Average Global Rank", display_kpi_value(kpis.get("average_global_rank"))),
+        ("Best Global Rank", display_kpi_value(kpis.get("best_global_rank"))),
     ]
     cards_html = "".join(
         f"""
@@ -254,10 +287,7 @@ def render_title_kpi_cards(kpis: dict[str, str]) -> None:
         """
         for label, value in cards
     )
-    st.markdown(
-        f'<div class="title-profile-kpi-grid">{cards_html}</div>',
-        unsafe_allow_html=True,
-    )
+    st.html(f'<div class="title-profile-kpi-grid">{cards_html}</div>')
 
 
 def render_title_profile_section(
