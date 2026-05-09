@@ -16,10 +16,9 @@ from netflix.components.branding import render_page_header, render_streamly_bann
 from netflix.components.home_summary import render_home_summary
 from netflix.components.filters import render_labeled_selectbox
 from netflix.components.footer import render_disclaimer_footer
-from netflix.components.visuals import make_country_choropleth
+from netflix.components.title_profile import render_title_profile_section
 from netflix.utils.constants import STYLES_PATH
-from netflix.utils.helpers import get_weekly_df, read_css
-
+from netflix.utils.helpers import get_global_df, get_metadata_df, get_weekly_df, read_css
 
 PAGE_COLORS = {
     "bg": "#0F0D0B",
@@ -630,7 +629,31 @@ def country_insights() -> None:
             )
             
         render_author_credit()
+
+    render_section_heading(
+        "Selected Title Profile",
+        "Explore poster, synopsis, trailer, and global Top 10 KPIs for one title.",
+    )
+    profile_options = title_options or sorted(
+        weekly_df["show_title"].dropna().unique().tolist()
+    )
+    if not profile_options:
+        st.info("No titles are available for the selected title profile.")
+    else:
+        with st.container(border=True):
+            selected_profile_title = render_title_selectbox(
+                "Choose one title to profile",
+                profile_options,
+                key="country_insights_profile_title",
+            )
+            render_title_profile_section(
+                selected_profile_title,
+                metadata_df=get_metadata_df(),
+                kpi_records_df=get_global_df(),
+                genre_records_df=weekly_df,
+            )
         
     render_disclaimer_footer()
+
 if __name__ == "__main__":
     country_insights()

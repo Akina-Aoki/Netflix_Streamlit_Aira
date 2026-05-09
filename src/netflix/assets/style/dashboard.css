@@ -763,3 +763,196 @@ li[role="option"]:hover {
   margin-bottom: 1rem;
   padding: 1rem 1.15rem;
 }
+
+/* Shared Selected Title Profile component ------------------------------- */
+.title-profile-section {
+  margin-top: 1rem;
+}
+
+.title-profile-hero {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(247, 185, 82, 0.16), transparent 34%),
+    linear-gradient(135deg, rgba(232, 98, 42, 0.10), rgba(15, 13, 11, 0.18)),
+    var(--streamly-card);
+  border: 1px solid var(--streamly-border);
+  border-radius: 22px;
+  display: grid;
+  gap: 1.4rem;
+  grid-template-columns: minmax(190px, 280px) minmax(0, 1fr);
+  margin: 0.75rem 0 1rem;
+  overflow: hidden;
+  padding: 1.15rem;
+}
+
+.title-profile-poster-card {
+  background: #100D0A;
+  border: 1px solid rgba(247, 185, 82, 0.22);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
+  min-height: 360px;
+  overflow: hidden;
+}
+
+.title-profile-poster {
+  display: block;
+  height: 100%;
+  min-height: 360px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.title-profile-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 0.5rem 0.35rem;
+}
+
+.title-profile-eyebrow {
+  color: var(--streamly-amber);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+}
+
+.title-profile-content h2 {
+  color: var(--streamly-text);
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-weight: 700;
+  line-height: 0.98;
+  margin: 0 0 0.75rem;
+}
+
+.title-profile-genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.title-profile-genre-pill {
+  background: rgba(247, 185, 82, 0.10);
+  border: 1px solid rgba(247, 185, 82, 0.36);
+  border-radius: 999px;
+  color: var(--streamly-primary);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.35rem 0.7rem;
+  text-transform: uppercase;
+}
+
+.title-profile-genre-pill.muted {
+  border-color: rgba(158, 150, 137, 0.35);
+  color: var(--streamly-muted);
+}
+
+.title-profile-rating {
+  align-items: center;
+  color: var(--streamly-text);
+  display: flex;
+  flex-wrap: wrap;
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+}
+
+.title-profile-stars {
+  color: var(--streamly-primary);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+}
+
+.title-profile-description {
+  color: var(--streamly-muted);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 1.15rem;
+  max-width: 850px;
+}
+
+.title-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.title-profile-trailer-button {
+  background: linear-gradient(135deg, var(--streamly-primary), var(--streamly-orange));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  box-shadow: 0 10px 24px rgba(232, 98, 42, 0.20);
+  color: #160F08 !important;
+  display: inline-flex;
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  padding: 0.72rem 1.15rem;
+  text-decoration: none !important;
+}
+
+.title-profile-trailer-button.disabled {
+  background: rgba(158, 150, 137, 0.12);
+  box-shadow: none;
+  color: var(--streamly-muted) !important;
+  cursor: not-allowed;
+}
+
+.title-profile-kpi-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0.9rem 0 0.4rem;
+}
+
+.title-profile-kpi-card {
+  background:
+    radial-gradient(circle at top right, rgba(255, 184, 77, 0.15), transparent 40%),
+    linear-gradient(180deg, var(--streamly-card) 0%, #17120E 100%);
+  border: 1px solid var(--streamly-border);
+  border-radius: 16px;
+  min-height: 118px;
+  padding: 1rem 1.05rem;
+}
+
+.title-profile-kpi-label {
+  color: var(--streamly-muted);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+}
+
+.title-profile-kpi-value {
+  color: var(--streamly-text);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: clamp(1.55rem, 2.4vw, 2.25rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+@media (max-width: 900px) {
+  .title-profile-hero,
+  .title-profile-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .title-profile-poster-card,
+  .title-profile-poster {
+    min-height: 0;
+    max-height: 520px;
+  }
+}
