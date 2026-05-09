@@ -12,14 +12,17 @@ def _variant_class(prefix: str, variant: str) -> str:
     return f"{prefix}-{safe_variant}"
 
 
-def render_kpi_card(label: str, value: str, note: str) -> None:
-    """Render one Streamly KPI card."""
+def render_kpi_card(label: str, value: str, note: str | None = None) -> None:
+    """Render one Streamly KPI card with an optional explanatory note."""
+    note_html = note or "&nbsp;"
+    empty_note_class = " home-kpi-note-empty" if not note else ""
+
     st.markdown(
         f"""
         <div class="home-kpi-card">
             <div class="home-kpi-label">{label}</div>
             <div class="home-kpi-value">{value}</div>
-            <div class="home-kpi-note">{note}</div>
+            <div class="home-kpi-note{empty_note_class}">{note_html}</div>
         </div>
         """,
         unsafe_allow_html=True,

@@ -16,10 +16,9 @@ from netflix.components.branding import render_page_header, render_streamly_bann
 from netflix.components.home_summary import render_home_summary
 from netflix.components.filters import render_labeled_selectbox
 from netflix.components.footer import render_disclaimer_footer
-from netflix.components.visuals import make_country_choropleth
+from netflix.components.title_profile import (get_all_title_profile_options, render_title_profile_section,)
 from netflix.utils.constants import STYLES_PATH
-from netflix.utils.helpers import get_weekly_df, read_css
-
+from netflix.utils.helpers import (get_global_df, get_metadata_df, get_weekly_df, read_css,)
 
 PAGE_COLORS = {
     "bg": "#0F0D0B",
@@ -271,101 +270,6 @@ def build_donut_figure(counts_df: pd.DataFrame) -> go.Figure:
     return fig
 
 
-def build_title_trend_df(
-    df: pd.DataFrame,
-    selected_country: str,
-    selected_year: int,
-    selected_category: str,
-    selected_title: str,
-) -> pd.DataFrame:
-    """Return weekly performance for one title across the selected year.
-
-    The selected month is intentionally not applied here. It only chooses the
-    Top 10 snapshot that feeds the title dropdown.
-    """
-    trend_df = df[
-        (df["country_name"] == selected_country)
-        & (df["year"] == selected_year)
-        & (df["show_title"] == selected_title)
-    ].copy()
-
-    if selected_category != "All":
-        trend_df = trend_df[trend_df["category"] == selected_category].copy()
-
-    if trend_df.empty:
-        return pd.DataFrame()
-
-    agg = {"score": "sum", "weekly_rank": "min"}
-    if "cumulative_weeks_in_top_10" in trend_df.columns:
-        agg["cumulative_weeks_in_top_10"] = "max"
-
-    return (
-        trend_df.groupby(["week", "show_title"], as_index=False)
-        .agg(agg)
-        .rename(columns={"score": "performance_score"})
-        .sort_values("week")
-    )
-
-
-def build_title_trend_figure(trend_df: pd.DataFrame, selected_title: str) -> go.Figure:
-    """Build a Streamly-styled weekly performance line chart."""
-    hover_fields = ["show_title", "weekly_rank"]
-    hover_template = (
-        "Week: %{x|%b %d, %Y}<br>"
-        "Title: %{customdata[0]}<br>"
-        "Performance Score: %{y}<br>"
-        "Weekly Rank: %{customdata[1]}"
-    )
-
-    # Add optional metadata to the hover tooltip only when the dataset has it.
-    if "cumulative_weeks_in_top_10" in trend_df.columns:
-        hover_fields.append("cumulative_weeks_in_top_10")
-        hover_template += "<br>Weeks in Top 10: %{customdata[2]}"
-
-    fig = px.line(
-        trend_df,
-        x="week",
-        y="performance_score",
-        markers=True,
-        custom_data=hover_fields,
-    )
-    fig.update_traces(
-        name=selected_title,
-        line=dict(color=PAGE_COLORS["amber"], width=3),
-        marker=dict(
-            color=PAGE_COLORS["yellow"],
-            size=8,
-            line=dict(color=PAGE_COLORS["orange"], width=1),
-        ),
-        hovertemplate=hover_template + "<extra></extra>",
-    )
-    fig.update_layout(
-        height=430,
-        paper_bgcolor=PAGE_COLORS["card"],
-        plot_bgcolor=PAGE_COLORS["card"],
-        font=dict(color=PAGE_COLORS["text"], family="Segoe UI, sans-serif"),
-        xaxis_title="Week",
-        yaxis_title="None",
-        margin=dict(l=10, r=25, t=20, b=35),
-        showlegend=False,
-    )
-    fig.update_xaxes(
-        showgrid=True,
-        gridcolor="rgba(247, 185, 82, 0.18)",
-        gridwidth=1,
-        tickmode="array",
-        tickvals=trend_df["week"],
-    )
-    fig.update_yaxes(
-        title_text=None,
-        showticklabels=False,
-        showgrid=False,
-        zeroline=False,
-        rangemode="tozero",
-    )
-    return fig
-
-
 def build_heatmap_figure(heatmap_df: pd.DataFrame, selected_country: str) -> go.Figure:
     """Render a dark Streamly-styled heatmap figure."""
     y_labels = [
@@ -418,8 +322,13 @@ def render_card_header(title: str, subtitle: str | None = None) -> None:
         unsafe_allow_html=True,
     )
 
-def render_title_selectbox(label: str, options: list, key: str) -> str:
-    """Render the trend selector with Country Insights card-title styling."""
+def render_title_selectbox(
+    label: str,
+    options: list[str],
+    key: str,
+    index: int = 0,
+) -> str:
+    """Render a searchable title selector with Country Insights card-title styling."""
     st.markdown(
         f'<div class="country-card-title country-selector-title">{label}</div>',
         unsafe_allow_html=True,
@@ -427,6 +336,7 @@ def render_title_selectbox(label: str, options: list, key: str) -> str:
     return st.selectbox(
         label,
         options,
+        index=index,
         key=key,
         label_visibility="collapsed",
     )
@@ -444,6 +354,27 @@ def render_section_heading(title: str, subtitle: str) -> None:
         unsafe_allow_html=True,
     )
 
+
+def render_section_divider() -> None:
+    """Render a visual separator before the Country Insights chart section."""
+    st.markdown(
+        '<div class="country-home-section-divider" aria-hidden="true"></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def build_filter_context_title(
+    selected_country: str,
+    selected_year: int,
+    selected_month: str,
+    selected_category: str,
+) -> str:
+    """Build the main chart title from the active filter context."""
+    title_parts = [selected_country, f"{selected_month} {selected_year}"]
+    if selected_category != "All":
+        title_parts.append(selected_category)
+
+    return " · ".join(str(part) for part in title_parts if part)
 
 
 def render_filters(weekly_df: pd.DataFrame) -> tuple[str, int, str, str]:
@@ -494,8 +425,9 @@ def country_insights() -> None:
 
     render_streamly_banner(width=200)
     render_home_summary(show_banner=False)
+    render_section_divider()
     render_page_header(
-        title="Country Insights Home",
+        title="Top 10 Films and Movies Worldwide",
         subtitle="Explore what each country prefers and compare viewing patterns across markets.",
     )
     
@@ -525,100 +457,97 @@ def country_insights() -> None:
 
     if top10_df.empty:
         st.warning("No titles found for the selected filters.")
-        render_disclaimer_footer()
-        return
-
-    map_col, donut_col = st.columns([1.15, 1], gap="large")
-
-    with map_col:
-        with st.container(border=True):
-            render_card_header(
-                "Selected Market",
-                "Highlighted country based on the active filters",
-            )
-            map_fig = make_country_choropleth(weekly_df, selected_country)
-            if map_fig is None:
-                st.info("Map data is unavailable for the selected dataset.")
-            else:
-                st.plotly_chart(map_fig, use_container_width=True)
-
-    with donut_col:
-        with st.container(border=True):
-            render_card_header("Films vs TV", "Share of titles in the Top 10 chart")
-            counts_df = build_films_tv_counts(top10_df)
-            chart_col, stat_col = st.columns([1.2, 1])
-            with chart_col:
-                st.plotly_chart(build_donut_figure(counts_df), use_container_width=True)
-            with stat_col:
-                films_count = int(
-                    counts_df.loc[counts_df["category"] == "Films", "title_count"].iloc[
-                        0
-                    ]
-                )
-                tv_count = int(
-                    counts_df.loc[counts_df["category"] == "TV", "title_count"].iloc[0]
-                )
-                st.markdown(
-                    f"""
-                    <div class="country-donut-stat">
-                        <span>Films</span><strong>{films_count}</strong>
-                    </div>
-                    <div class="country-donut-stat">
-                        <span>TV</span><strong>{tv_count}</strong>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-    with st.container(border=True):
-        render_card_header(
-            "Top 10 Titles",
-            f"{selected_country} · {selected_month} {selected_year}",
-        )
-        st.plotly_chart(build_top10_bar_figure(top10_df), use_container_width=True)
-
-    render_section_heading(
-        "Title Performance Trend",
-        "See how a selected title performed over time in the selected country.",
-    )
-    st.markdown(
-        """
-        <div class="country-trend-note">
-            Use the Top 10 chart as the country snapshot, then choose one title to
-            inspect its weekly performance trend across the selected year.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-    title_options = (
-        top10_df.sort_values("performance_score", ascending=False)["show_title"]
-        .drop_duplicates()
-        .tolist()
-    )
-    with st.container(border=True):
-        selected_title = render_title_selectbox(
-            "Choose a title from the Top 10",
-            title_options,
-            key="country_insights_trend_title",
-        )
-        trend_df = build_title_trend_df(
-            weekly_df,
+        
+    else:
+        title_context = build_filter_context_title(
             selected_country,
             selected_year,
+            selected_month,
             selected_category,
-            selected_title,
         )
+        bar_col, donut_col = st.columns([1.25, 1], gap="large")
 
-        if trend_df.empty:
-            st.info("No weekly trend data is available for the selected title.")
-        else:
-            st.plotly_chart(
-                build_title_trend_figure(trend_df, selected_title),
-                use_container_width=True,
+
+        with bar_col:
+            with st.container(border=True):
+                render_card_header(title_context)
+                st.plotly_chart(
+                    build_top10_bar_figure(top10_df), use_container_width=True
+                )
+
+        with donut_col:
+            with st.container(border=True):
+                render_card_header("Films vs TV", "Share of titles in the Top 10 chart")
+                counts_df = build_films_tv_counts(top10_df)
+                chart_col, stat_col = st.columns([1.2, 1])
+                with chart_col:
+                    st.plotly_chart(
+                        build_donut_figure(counts_df), use_container_width=True
+                    )
+                with stat_col:
+                    films_count = int(
+                        counts_df.loc[
+                            counts_df["category"] == "Films", "title_count"
+                        ].iloc[0]
+                    )
+                    tv_count = int(
+                        counts_df.loc[
+                            counts_df["category"] == "TV", "title_count"
+                        ].iloc[0]
+                    )
+                    st.markdown(
+                        f"""
+                        <div class="country-donut-stat">
+                            <span>Films</span><strong>{films_count}</strong>
+                        </div>
+                        <div class="country-donut-stat">
+                            <span>TV</span><strong>{tv_count}</strong>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+    render_section_divider()
+
+    render_section_heading(
+        "Title Profile Explorer",
+        "Search for any Netflix title in the dataset and view its metadata and global Top 10 performance. This section is independent from the country, year, month, and category filters above."
+    )
+
+    profile_source_df = get_metadata_df()
+    profile_global_history_df = get_global_df()
+    all_profile_titles = get_all_title_profile_options(
+        profile_source_df,
+        global_df=profile_global_history_df,
+    )
+
+    if not all_profile_titles:
+        st.warning("No titles available for profiling.")
+    else:
+        default_profile_index = next(
+            (
+                index
+                for index, title in enumerate(all_profile_titles)
+                if title.casefold() == "stranger things"
+            ),
+            0,
+        )
+        with st.container(border=True):
+            selected_profile_title = render_title_selectbox(
+                "CHOOSE ONE TITLE TO PROFILE",
+                all_profile_titles,
+                key="independent_title_profile_selector",
+                index=default_profile_index,
             )
-            
-        render_author_credit()
-        
+            render_title_profile_section(
+                selected_profile_title,
+                metadata_df=profile_source_df,
+                kpi_records_df=profile_global_history_df,
+                genre_records_df=profile_global_history_df,
+            )
+
+    render_author_credit()
     render_disclaimer_footer()
+
 if __name__ == "__main__":
     country_insights()

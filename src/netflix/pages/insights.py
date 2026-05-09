@@ -3,6 +3,7 @@ from netflix.utils.helpers import get_global_df, get_metadata_df
 from netflix.utils.helpers import read_css
 from netflix.utils.constants import STYLES_PATH, IMAGE_PATH
 from netflix.components.footer import render_disclaimer_footer
+from netflix.components.title_profile import (calculate_title_kpis, get_title_profile_data, render_title_hero, render_title_kpi_cards,)
 import plotly.graph_objects as go
 
 import pandas as pd
@@ -11,6 +12,7 @@ st.image(str(IMAGE_PATH / "Logga_Streamly.png"), width=200)
 st.caption("Global Netflix viewing statistics")
 st.divider()
 
+read_css(STYLES_PATH / "dashboard.css")
 read_css(STYLES_PATH / "insights.css")
 
 
@@ -44,77 +46,30 @@ with col_right:
     )
 
 
-def show_poster(meta):
-    """Visar filmpostern om den finns annars felmeddelande"""
-    if meta is not None and str(meta["image"]) != "nan":
-        st.markdown(
-            f'<img src="{meta["image"]}" style="height:350px; width:250px; object-fit:cover; border-radius:4px;">',
-            unsafe_allow_html=True,
-        )
-    else:
-        st.caption("Image is not available")
-
-
-def show_info(title, meta):
-    """Visar titel, rating, beskrivning och cast, annars felmeddelande"""
-    st.subheader(title.title())
-    if meta is not None:
-        st.caption(f"⭐ {meta['rating']} / 10")
-        description = (
-            str(meta["description"])
-            if str(meta["description"]) != "nan"
-            else "Data is not available"
-        )
-        if len(description) > 150:
-            description = description[:150] + "..."
-        st.write(description)
-        st.caption(
-            f"**Cast:** {meta['cast_members'] if str(meta['cast_members']) != 'nan' else 'Data is not available'}"
-        )
-        if str(meta["trailer"]) != "nan":
-            st.link_button("▶ Play Trailer", meta["trailer"])
-    else:
-        st.warning("Data is not available")
-
-
-def get_metadata(title):
-    """Get metadata for selected title"""
-    match = df_metadata[df_metadata["show_title"] == title.lower()]
-    return match.iloc[0] if not match.empty else None
-
-
-def show_kpi(stats):
-    """Visar KPI-kort med statistik annars felmeddelande"""
-    if stats is not None:
-        st.divider()
-        k1, k2, k3 = st.columns(3)
-        k1.metric("Weeks in Top 10", stats["global_weeks_in_top10"], border=True)
-        k2.metric("Best Global Rank", stats["global_best_rank"], border=True)
-        k3.metric("Average Global Rank", stats["global_avg_rank"], border=True)
-    else:
-        st.warning("Data is missing")
-
-
-def show_title_card(col, title, meta, stats):
-    """Samlar alla delar i ett kort, anropar show_poster, show_info och show_kpi"""
-    with col:
-        show_poster(meta)
-        show_info(title, meta)
-        show_kpi(stats)
-
-
 def get_stats(title):
-    """Hämtar statistik för den givna titeln från FactGlobal_Final.csv"""
-    data = df_global[df_global["show_title"] == title]
+    """Fetch reusable statistics and chart data for a comparison title."""
+    data = df_global[df_global["show_title"] == title].copy()
     if data.empty:
         return None
+    
+    kpis = calculate_title_kpis(df_global, title)
+    chart_columns = ["week", "weekly_views", "weekly_rank"]
+    available_chart_columns = [col for col in chart_columns if col in data.columns]
+    chart_data = data[available_chart_columns].sort_values("week")
     return {
-        "global_weeks_in_top10": int(data["cumulative_weeks_in_top_10"].max()),
-        "global_best_rank": int(data["weekly_rank"].min()),
-        "global_avg_rank": round(data["weekly_rank"].mean()),
-        "chart_data": data[["week", "weekly_views", "weekly_rank"]].sort_values("week"),
+        **kpis,
+        "chart_data": chart_data,
     }
 
+def show_title_card(col, title, stats):
+    """Render one selected title using the shared profile components."""
+    with col:
+        profile = get_title_profile_data(title, df_metadata, records_df=df_global)
+        render_title_hero(profile)
+        if stats is not None:
+            render_title_kpi_cards(stats)
+        else:
+            st.warning("Data is missing")
 
 def show_views_chart(stats_left, stats_right, title_left, title_right):
     """Visar line chart med weekly views över tid för båda titlarna"""
@@ -167,17 +122,15 @@ def show_views_chart(stats_left, stats_right, title_left, title_right):
 
 
 if title_left:
-    meta_left = get_metadata(title_left)
     stats_left = get_stats(title_left)
-    show_title_card(col_left, title_left, meta_left, stats_left)
+    show_title_card(col_left, title_left, stats_left)
 
 if title_right:
-    meta_right = get_metadata(title_right)
     stats_right = get_stats(title_right)
-    show_title_card(col_right, title_right, meta_right, stats_right)
+    show_title_card(col_right, title_right, stats_right)
 
 
-if title_left and title_right:
+if title_left and title_right and stats_left is not None and stats_right is not None:
     show_views_chart(stats_left, stats_right, title_left, title_right)
 
 

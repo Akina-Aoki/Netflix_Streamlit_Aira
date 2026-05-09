@@ -98,4 +98,36 @@ def get_metadata_df():
     return pd.read_csv(DATA_PATH / "DimMetaData_Final.csv")
 
 
+def _clean_title_option(value: object) -> str:
+    """Return a display-ready title option or an empty string for null values."""
+    if pd.isna(value):
+        return ""
+
+    return str(value).strip()
+
+
+def get_independent_title_profile_options(
+    global_df: pd.DataFrame | None = None,
+    metadata_df: pd.DataFrame | None = None,
+) -> list[str]:
+    """Build the full title list for the independent profile explorer.
+
+    The Country Insights title profile must not depend on the page-level
+    country/year/month/category filters, so this helper only reads full global
+    title data and optional metadata title data.
+    """
+    title_lookup: dict[str, str] = {}
+
+    for source_df in (global_df, metadata_df):
+        if source_df is None or source_df.empty or "show_title" not in source_df.columns:
+            continue
+
+        for raw_title in source_df["show_title"].dropna().tolist():
+            title = _clean_title_option(raw_title)
+            if not title:
+                continue
+            title_lookup.setdefault(title.casefold(), title)
+
+    return sorted(title_lookup.values(), key=lambda title: title.casefold())
+
 

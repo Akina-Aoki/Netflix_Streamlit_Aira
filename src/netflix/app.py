@@ -21,9 +21,9 @@ read_css(STYLES_PATH / "main.css")
 # st.image(str(IMAGE_PATH / "Logga_Streamly.png"), use_container_width=True)
 
 pages = [
-    st.Page("pages/country_insights.py", title="🏠Country Insights Home"),
+    st.Page("pages/country_insights.py", title="🏠Home"),
     st.Page("pages/success_profile.py", title="⭐ Success Profile"),
-    st.Page("pages/insights.py", title="⭐Compare Movies and Series"),
+    st.Page("pages/insights.py", title="⭐Movies and Series Comparison"),
 ]
 
 pg = st.navigation(pages)

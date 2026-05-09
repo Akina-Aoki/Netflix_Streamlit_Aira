@@ -65,28 +65,28 @@ def render_home_summary(show_banner: bool = True) -> None:
         render_kpi_card(
             label="Total Films",
             value=total_films,
-            note="Unique film titles across Netflix viewing datasets.",
+            note="Number of films.",
         )
 
     with col2:
         render_kpi_card(
             label="Total Series",
             value=total_series,
-            note="Unique TV titles tracked across weekly and country data.",
+            note="Number of Series",
         )
 
     with col3:
         render_kpi_card(
             label="Countries",
             value=total_countries,
-            note="Markets represented in the country-level Top 10 data.",
+            note="Number of markets represented",
         )
 
     with col4:
         render_kpi_card(
             label="Weeks Tracked",
             value=weeks_tracked,
-            note="Weekly snapshots available for trend exploration.",
+            note="Netflix Tudum dataset between July 2021 and March 2026",
         )
 
     with col5:
@@ -99,9 +99,10 @@ def render_home_summary(show_banner: bool = True) -> None:
     render_info_card(
         title="A visual pulse check on Netflix viewing behavior.",
         body=f"""
-            Streamly visualizes Netflix global viewing data across weekly and all-time datasets.
-            Use the dashboard to explore what audiences watch, compare films and TV series,
-            and understand how popularity shifts across countries and time.
+            Streamly helps users explore what people around the world watch on Netflix.
+            The app shows which films and TV series appear in the Top 10, how viewing
+            patterns change over time, and how audience preferences differ between
+            countries. 
             <br><br>
             The dataset is sourced from Netflix Tudum Top 10 data:
             <a href="{TUDUM_SOURCE_URL}" target="_blank">Netflix Tudum — Most Popular</a>.
