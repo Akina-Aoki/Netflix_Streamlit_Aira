@@ -18,7 +18,7 @@ from netflix.components.filters import render_labeled_selectbox
 from netflix.components.footer import render_disclaimer_footer
 from netflix.components.title_profile import (get_all_title_profile_options, render_title_profile_section,)
 from netflix.utils.constants import STYLES_PATH
-from netflix.utils.helpers import (get_global_df, get_metadata_df, get_weekly_df, read_css,)
+from netflix.utils.helpers import (get_country_df, get_global_df, get_metadata_df, get_weekly_df, read_css,)
 
 PAGE_COLORS = {
     "bg": "#0F0D0B",
@@ -546,6 +546,11 @@ def country_insights() -> None:
                 genre_records_df=profile_global_history_df,
             )
 
+            render_single_title_market_reach(
+                title_name=selected_profile_title,
+                country_df=get_country_df(),
+            )
+            
     render_author_credit()
     render_disclaimer_footer()
 
