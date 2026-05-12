@@ -455,8 +455,8 @@ def _title_metric_empty_message(metric_label: str) -> None:
     st.info(f"No {metric_label.lower()} data is available for this title.")
 
 
-def _style_title_metric_figure(fig, yaxis_title: str | None = None):
-    """Apply Streamly dark styling to title-profile metric charts."""
+def _style_title_metric_figure(fig):
+    """Apply Streamly dark styling to uncluttered title-profile metric charts."""
     fig.update_layout(
         paper_bgcolor=PAGE_COLORS["card"],
         plot_bgcolor=PAGE_COLORS["card"],
@@ -464,10 +464,12 @@ def _style_title_metric_figure(fig, yaxis_title: str | None = None):
         margin=dict(l=10, r=20, t=20, b=35),
         showlegend=False,
     )
-    fig.update_xaxes(gridcolor="rgba(158, 150, 137, 0.14)", title_text=None)
+    fig.update_xaxes(title_text=None, showgrid=False)
     fig.update_yaxes(
-        gridcolor="rgba(158, 150, 137, 0.14)",
-        title_text=yaxis_title,
+        title_text=None,
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False,
     )
     return fig
 
@@ -527,51 +529,49 @@ def render_nordic_ranking_for_title(
             rank_label = f"#{int(best_rank)}" if pd.notna(best_rank) else "No data"
             muted_class = " market-rank-row-muted" if pd.isna(best_rank) else ""
             rows.append(
-                f"""
-                <div class="market-rank-row{muted_class}">
-                    <div class="market-rank-country"><span>{flag}</span><strong>{country}</strong></div>
-                    <div class="market-rank-value">{rank_label}</div>
-                </div>
-                """
+                (
+                    f'<div class="market-rank-row{muted_class}">'
+                    f'<div class="market-rank-country"><span>{flag}</span>'
+                    f'<strong>{country}</strong></div>'
+                    f'<div class="market-rank-value">{rank_label}</div>'
+                    '</div>'
+                )
             )
 
-        st.markdown(
-            f"""
-            <style>
-                .market-rank-row {{
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0.7rem 0.85rem;
-                    margin: 0.45rem 0;
-                    border: 1px solid rgba(247, 185, 82, 0.18);
-                    border-radius: 0.8rem;
-                    background: rgba(42, 33, 24, 0.45);
-                }}
-                .market-rank-row-muted {{ opacity: 0.62; }}
-                .market-rank-country {{
-                    display: flex;
-                    gap: 0.55rem;
-                    align-items: center;
-                    color: {PAGE_COLORS["text"]};
-                }}
-                .market-rank-value {{
-                    color: {PAGE_COLORS["yellow"]};
-                    font-weight: 800;
-                }}
-            </style>
-            {''.join(rows)}
-            """,
-            unsafe_allow_html=True,
-        )
+        rank_styles = f"""
+<style>
+.market-rank-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0.85rem;
+    margin: 0.45rem 0;
+    border: 1px solid rgba(247, 185, 82, 0.18);
+    border-radius: 0.8rem;
+    background: rgba(42, 33, 24, 0.45);
+}}
+.market-rank-row-muted {{ opacity: 0.62; }}
+.market-rank-country {{
+    display: flex;
+    gap: 0.55rem;
+    align-items: center;
+    color: {PAGE_COLORS["text"]};
+}}
+.market-rank-value {{
+    color: {PAGE_COLORS["yellow"]};
+    font-weight: 800;
+}}
+</style>
+"""
+        st.markdown(f"{rank_styles}{''.join(rows)}", unsafe_allow_html=True)
 
 
 def render_title_yearly_views_chart(title_name: str, country_df: pd.DataFrame) -> None:
     """Render yearly viewing/performance totals for the selected title."""
     with st.container(border=True):
         title_df = _prepare_title_time_df(title_name, country_df)
-        metric_df, metric_label, format_type = resolve_title_metric(title_df)
-        st.markdown(f"#### {metric_label} per year")
+        metric_df, metric_label, _format_type = resolve_title_metric(title_df)
+        st.markdown("#### Popularity Per Year")
 
         if metric_df.empty:
             _title_metric_empty_message(metric_label)
@@ -591,27 +591,22 @@ def render_title_yearly_views_chart(title_name: str, country_df: pd.DataFrame) -
         yearly_df["bar_color"] = yearly_df["year"].apply(
             lambda year: "highlight" if int(year) == highlight_year else "standard"
         )
-        yearly_df["label"] = yearly_df["metric_value"].apply(
-            lambda value: _format_metric_value(value, format_type)
-        )
 
         fig = px.bar(
             yearly_df,
             x="year",
             y="metric_value",
-            text="label",
             color="bar_color",
             color_discrete_map={
                 "standard": PAGE_COLORS["yellow"],
                 "highlight": PAGE_COLORS["orange"],
             },
-            hover_data={"year": True, "metric_value": ":,.0f", "bar_color": False, "label": False},
+            hover_data={"year": True, "metric_value": ":,.0f", "bar_color": False},
         )
-        fig.update_traces(textposition="outside", cliponaxis=False)
+        fig.update_traces(text=None, texttemplate=None, cliponaxis=False)
         fig.update_layout(height=360)
         fig.update_xaxes(type="category")
-        st.plotly_chart(_style_title_metric_figure(fig, metric_label), width="stretch")
-
+        st.plotly_chart(_style_title_metric_figure(fig), width="stretch")
 
 def _get_title_available_years(title_name: str, country_df: pd.DataFrame) -> list[int]:
     """Return sorted years with title rows that can feed time-series charts."""
@@ -628,8 +623,8 @@ def render_title_monthly_views_chart(
     """Render monthly viewing/performance totals and return the selected year."""
     with st.container(border=True):
         title_df = _prepare_title_time_df(title_name, country_df)
-        metric_df, metric_label, format_type = resolve_title_metric(title_df)
-        st.markdown(f"#### {metric_label} per month")
+        metric_df, metric_label, _format_type = resolve_title_metric(title_df)
+        st.markdown("#### Popularity By Month")
 
         if metric_df.empty:
             _title_metric_empty_message(metric_label)
@@ -662,22 +657,19 @@ def render_title_monthly_views_chart(
         )
         monthly_df = month_lookup.merge(monthly_df, on="month_num", how="left")
         monthly_df["metric_value"] = monthly_df["metric_value"].fillna(0)
-        monthly_df["label"] = monthly_df["metric_value"].apply(
-            lambda value: _format_metric_value(value, format_type)
-        )
+
 
         fig = px.bar(
             monthly_df,
             x="month_name",
             y="metric_value",
-            text="label",
             color_discrete_sequence=[PAGE_COLORS["yellow"]],
-            hover_data={"month_name": True, "metric_value": ":,.0f", "month_num": False, "label": False},
+            hover_data={"month_name": True, "metric_value": ":,.0f", "month_num": False},
         )
-        fig.update_traces(textposition="outside", cliponaxis=False)
+        fig.update_traces(text=None, texttemplate=None, cliponaxis=False)
         fig.update_layout(height=390)
         fig.update_xaxes(categoryorder="array", categoryarray=list(calendar.month_name)[1:])
-        st.plotly_chart(_style_title_metric_figure(fig, metric_label), width="stretch")
+        st.plotly_chart(_style_title_metric_figure(fig), width="stretch")
         return int(selected_year)
 
 
@@ -690,7 +682,7 @@ def render_title_weekly_views_chart(
     with st.container(border=True):
         title_df = _prepare_title_time_df(title_name, country_df)
         metric_df, metric_label, _format_type = resolve_title_metric(title_df)
-        st.markdown(f"#### {metric_label} per week")
+        st.markdown(f"#### Popularity By Week")
 
         if metric_df.empty or selected_year is None:
             _title_metric_empty_message(metric_label)
@@ -730,9 +722,13 @@ def render_title_weekly_views_chart(
             color_discrete_sequence=[PAGE_COLORS["orange"]],
             hover_data={"week": "|%Y-%m-%d", "metric_value": ":,.0f"},
         )
-        fig.update_traces(line=dict(width=3), marker=dict(size=7))
+        fig.update_traces(line=dict(width=3), marker=dict(size=7), text=None, texttemplate=None)
         fig.update_layout(height=390)
-        st.plotly_chart(_style_title_metric_figure(fig, metric_label), width="stretch")
+        if selected_month == "All months":
+            fig.update_xaxes(dtick="M1", tickformat="%b")
+        else:
+            fig.update_xaxes(nticks=6, tickformat="%b %-d")
+        st.plotly_chart(_style_title_metric_figure(fig), width="stretch")
 
 
 def render_selected_title_market_analytics(

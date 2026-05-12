@@ -1,5 +1,5 @@
 # Netflix Streamlit Dashboard
-- [Streamlit Project Link](https://netflixappgit-ww5sfjcnptv9s8ge6ruqia.streamlit.app/)
+- [Streamlit Project Link](https://netflix-top10-tudum-analysis.streamlit.app/)
 
 This project is a collaborative Data Engineering and UX project built with Streamlit.  
 The dashboard uses Netflix Top 10 data from Tudum by Netflix and turns it into an interactive web app called **Streamly**.
@@ -12,16 +12,13 @@ The project is built with a clear structure so the code is easier to maintain, r
 ## The dashboard includes these main pages:
 
 - **🏠Country Insights Home**  
-  Shows Netflix Top 10 patterns by country, year, month, and category.
+  Shows Netflix Top 10 patterns by country, year, month, and category with single title profile that shows market reach, and timeline popularity information yearly, monthly and weekly.
 
 - **⭐Best Movie and Serie**  
   Allows users to compare two selected titles side by side.
 
 - **⭐Success Profile**  
   Explores what successful Netflix titles have in common based on ranking, category, and time period.
-
-- **📊Russia: Data Story**  
-  Contains a focused datastory telling analysis of Russia compared with the rest of the world.
 
 The project follows a `src` folder structure and separates pages, components, helper functions, assets, and styling into different folders.
 
