@@ -156,7 +156,7 @@ def prepare_country_reach_data(
         reach_df["country_name"].dropna().astype(str).unique().tolist()
     )
 
-    return reach_df, int(reach_df[country_key].nunique()) country_names
+    return reach_df, int(reach_df[country_key].nunique()), country_names
 
 
 @st.cache_data
