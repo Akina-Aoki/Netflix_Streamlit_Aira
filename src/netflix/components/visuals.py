@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from netflix.components.country_charts import (build_popularity_month_figure, build_popularity_week_figure, build_popularity_year_figure,)
-from netflix.components.theme import NORDIC_FLAGS, STREAMLY_COLORS
+from netflix.components.theme import NORDIC_COUNTRIES, NORDIC_FLAGS, STREAMLY_COLORS
 from netflix.utils.country_insights import (build_title_monthly_popularity_df, build_title_weekly_popularity_df, build_title_yearly_popularity_df, prepare_title_time_df, resolve_title_metric,)
 from netflix.utils.helpers import get_country_df, prepare_country_reach_data
 
@@ -361,33 +361,49 @@ def _title_metric_empty_message(metric_label: str) -> None:
 
 def render_nordic_ranking_for_title(
     title_name: str,
-    country_df: pd.DataFrame,
+    country_df: pd.DataFrame | None,
     selected_year: int | None = None,
 ) -> None:
     """Show the selected title's best weekly rank across Nordic countries."""
+    no_data_message = "No Nordic ranking data is available for this title and year."
     with st.container(border=True):
         st.markdown("#### Ranking across the Nordic countries")
+        st.caption("Best weekly Top 10 rank in selected/latest year")
 
-        required_columns = {"country_name", "weekly_rank"}
+        source_columns = {"show_title", "country_name", "weekly_rank"}
+        if (
+            country_df is None
+            or country_df.empty
+            or not source_columns.issubset(country_df.columns)
+        ):
+            st.info(no_data_message)
+            return
+
+        required_columns = {"country_name", "weekly_rank", "year"}
         title_df = prepare_title_time_df(title_name, country_df)
         if title_df.empty or not required_columns.issubset(title_df.columns):
-            st.info("No Nordic ranking data is available for this title.")
+            st.info("no_data_message")
             return
         
         title_df["weekly_rank"] = pd.to_numeric(title_df["weekly_rank"], errors="coerce")
-        title_df = title_df[title_df["country_name"].isin(nordic_flags)].copy()
+        title_df = title_df[title_df["country_name"].isin(NORDIC_COUNTRIES)].copy()
         title_df = title_df.dropna(subset=["weekly_rank", "year"])
 
         if title_df.empty:
-            st.info("No Nordic ranking data is available for this title.")
+            st.info(no_data_message)
             return
 
-        if selected_year is None or selected_year not in set(title_df["year"].astype(int)):
+        title_df["year"] = title_df["year"].astype(int)
+        available_years = set(title_df["year"].unique())
+        if selected_year is None:
             selected_year = int(title_df["year"].max())
+        elif selected_year not in available_years:
+            st.info(no_data_message)
+            return
 
         year_df = title_df[title_df["year"] == selected_year].copy()
         if year_df.empty:
-            st.info(f"No Nordic ranking data is available for {selected_year}.")
+            st.info(no_data_message)
             return
 
         best_rank_by_country = (
@@ -399,25 +415,24 @@ def render_nordic_ranking_for_title(
         lookup = dict(
             zip(best_rank_by_country["country_name"], best_rank_by_country["best_rank"], strict=False)
         )
-        st.caption(f"Best weekly Top 10 rank in {selected_year} (1 is best).")
 
         rows = []
-        for country, flag in nordic_flags.items():
-            best_rank = lookup.get(country)
+        for country_name in NORDIC_COUNTRIES:
+            flag = NORDIC_FLAGS.get(country_name, "")
+            best_rank = lookup.get(country_name)
             rank_label = f"#{int(best_rank)}" if pd.notna(best_rank) else "No data"
             muted_class = " market-rank-row-muted" if pd.isna(best_rank) else ""
             rows.append(
                 (
                     f'<div class="market-rank-row{muted_class}">'
                     f'<div class="market-rank-country"><span>{flag}</span>'
-                    f'<strong>{country}</strong></div>'
+                    f'<strong>{html.escape(country_name)}</strong></div>'
                     f'<div class="market-rank-value">{rank_label}</div>'
                     '</div>'
                 )
             )
 
         st.markdown("".join(rows), unsafe_allow_html=True)
-
 
 def render_title_yearly_views_chart(title_name: str, country_df: pd.DataFrame) -> None:
     """Render yearly viewing/performance totals for the selected title."""
