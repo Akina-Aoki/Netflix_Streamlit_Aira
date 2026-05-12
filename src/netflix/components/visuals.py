@@ -1,4 +1,5 @@
 """Reusable visualization helpers for Streamly pages."""
+import calendar
 import html
 import importlib.util
 import matplotlib.pyplot as plt
@@ -323,7 +324,7 @@ def render_single_title_market_reach(
     st.markdown(
         f"""
         <div class="market-reach-kpi-card">
-            <div class="success-kpi-label">Top 10 Countries Reached</div>
+            <div class="success-kpi-label">Countries Reached</div>
             <div class="success-kpi-value">{country_reach:,}</div>
             <div class="home-kpi-note">
                 Unique markets where this title appeared in the Netflix Top 10.
@@ -358,6 +359,405 @@ def render_single_title_market_reach(
             width="stretch",
             hide_index=True,
         )
+
+def _normalize_title_for_match(value: object) -> str:
+    """Normalize title text for case-insensitive title analytics matching."""
+    if pd.isna(value):
+        return ""
+
+    return str(value).strip().casefold()
+
+
+def _filter_title_rows(title_name: str, country_df: pd.DataFrame | None) -> pd.DataFrame:
+    """Return country-level rows for the selected title without raising on bad data."""
+    if country_df is None or country_df.empty or not title_name:
+        return pd.DataFrame()
+
+    if "show_title" not in country_df.columns:
+        return pd.DataFrame()
+
+    normalized_title = _normalize_title_for_match(title_name)
+    return country_df[
+        country_df["show_title"].apply(_normalize_title_for_match) == normalized_title
+    ].copy()
+
+
+def _prepare_title_time_df(title_name: str, country_df: pd.DataFrame | None) -> pd.DataFrame:
+    """Filter title rows and add parsed week/year/month columns when possible."""
+    title_df = _filter_title_rows(title_name, country_df)
+    if title_df.empty or "week" not in title_df.columns:
+        return pd.DataFrame()
+
+    title_df["week"] = pd.to_datetime(title_df["week"], errors="coerce")
+    title_df = title_df.dropna(subset=["week"]).copy()
+    if title_df.empty:
+        return pd.DataFrame()
+
+    title_df["year"] = title_df["week"].dt.year
+    title_df["month_num"] = title_df["week"].dt.month
+    title_df["month_name"] = title_df["week"].dt.month_name()
+    return title_df
+
+
+def resolve_title_metric(df: pd.DataFrame) -> tuple[pd.DataFrame, str, str]:
+    """
+    Add a numeric metric_value column using the best available real metric.
+
+    Returns the prepared dataframe, chart label, and formatting type.
+    """
+    if df is None or df.empty:
+        return pd.DataFrame(), "Performance score", "number"
+
+    metric_candidates = [
+        ("weekly_hours_viewed", "Hours viewed", "compact"),
+        ("hours_viewed", "Hours viewed", "compact"),
+        ("views", "Number of views", "compact"),
+    ]
+
+    metric_df = df.copy()
+    for column, label, format_type in metric_candidates:
+        if column in metric_df.columns:
+            metric_df["metric_value"] = pd.to_numeric(
+                metric_df[column], errors="coerce"
+            )
+            metric_df = metric_df.dropna(subset=["metric_value"]).copy()
+            return metric_df, label, format_type
+
+    if "weekly_rank" not in metric_df.columns:
+        return pd.DataFrame(), "Performance score", "number"
+
+    metric_df["weekly_rank"] = pd.to_numeric(metric_df["weekly_rank"], errors="coerce")
+    metric_df["metric_value"] = 11 - metric_df["weekly_rank"]
+    metric_df = metric_df[
+        metric_df["metric_value"].notna() & (metric_df["metric_value"] > 0)
+    ].copy()
+    return metric_df, "Performance score", "number"
+
+
+def _format_metric_value(value: float, format_type: str) -> str:
+    """Format metric labels compactly for chart annotations."""
+    if pd.isna(value):
+        return "0"
+
+    value = float(value)
+    if format_type == "compact":
+        if abs(value) >= 1_000_000_000:
+            return f"{value / 1_000_000_000:.1f}B"
+        if abs(value) >= 1_000_000:
+            return f"{value / 1_000_000:.1f}M"
+        if abs(value) >= 1_000:
+            return f"{value / 1_000:.1f}K"
+    return f"{value:,.0f}"
+
+
+def _title_metric_empty_message(metric_label: str) -> None:
+    """Render a consistent message when no chart data is available."""
+    st.info(f"No {metric_label.lower()} data is available for this title.")
+
+
+def _style_title_metric_figure(fig, yaxis_title: str | None = None):
+    """Apply Streamly dark styling to title-profile metric charts."""
+    fig.update_layout(
+        paper_bgcolor=PAGE_COLORS["card"],
+        plot_bgcolor=PAGE_COLORS["card"],
+        font=dict(color=PAGE_COLORS["text"], family="Segoe UI, sans-serif"),
+        margin=dict(l=10, r=20, t=20, b=35),
+        showlegend=False,
+    )
+    fig.update_xaxes(gridcolor="rgba(158, 150, 137, 0.14)", title_text=None)
+    fig.update_yaxes(
+        gridcolor="rgba(158, 150, 137, 0.14)",
+        title_text=yaxis_title,
+    )
+    return fig
+
+
+def render_nordic_ranking_for_title(
+    title_name: str,
+    country_df: pd.DataFrame,
+    selected_year: int | None = None,
+) -> None:
+    """Show the selected title's best weekly rank across Nordic countries."""
+    with st.container(border=True):
+        st.markdown("#### Ranking across the Nordic countries")
+
+        required_columns = {"country_name", "weekly_rank"}
+        title_df = _prepare_title_time_df(title_name, country_df)
+        if title_df.empty or not required_columns.issubset(title_df.columns):
+            st.info("No Nordic ranking data is available for this title.")
+            return
+
+        nordic_flags = {
+            "Sweden": "🇸🇪",
+            "Norway": "🇳🇴",
+            "Denmark": "🇩🇰",
+            "Finland": "🇫🇮",
+            "Iceland": "🇮🇸",
+        }
+        title_df["weekly_rank"] = pd.to_numeric(title_df["weekly_rank"], errors="coerce")
+        title_df = title_df[title_df["country_name"].isin(nordic_flags)].copy()
+        title_df = title_df.dropna(subset=["weekly_rank", "year"])
+
+        if title_df.empty:
+            st.info("No Nordic ranking data is available for this title.")
+            return
+
+        if selected_year is None or selected_year not in set(title_df["year"].astype(int)):
+            selected_year = int(title_df["year"].max())
+
+        year_df = title_df[title_df["year"] == selected_year].copy()
+        if year_df.empty:
+            st.info(f"No Nordic ranking data is available for {selected_year}.")
+            return
+
+        best_rank_by_country = (
+            year_df.groupby("country_name", as_index=False)["weekly_rank"]
+            .min()
+            .rename(columns={"weekly_rank": "best_rank"})
+        )
+
+        lookup = dict(
+            zip(best_rank_by_country["country_name"], best_rank_by_country["best_rank"], strict=False)
+        )
+        st.caption(f"Best weekly Top 10 rank in {selected_year} (1 is best).")
+
+        rows = []
+        for country, flag in nordic_flags.items():
+            best_rank = lookup.get(country)
+            rank_label = f"#{int(best_rank)}" if pd.notna(best_rank) else "No data"
+            muted_class = " market-rank-row-muted" if pd.isna(best_rank) else ""
+            rows.append(
+                f"""
+                <div class="market-rank-row{muted_class}">
+                    <div class="market-rank-country"><span>{flag}</span><strong>{country}</strong></div>
+                    <div class="market-rank-value">{rank_label}</div>
+                </div>
+                """
+            )
+
+        st.markdown(
+            f"""
+            <style>
+                .market-rank-row {{
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.7rem 0.85rem;
+                    margin: 0.45rem 0;
+                    border: 1px solid rgba(247, 185, 82, 0.18);
+                    border-radius: 0.8rem;
+                    background: rgba(42, 33, 24, 0.45);
+                }}
+                .market-rank-row-muted {{ opacity: 0.62; }}
+                .market-rank-country {{
+                    display: flex;
+                    gap: 0.55rem;
+                    align-items: center;
+                    color: {PAGE_COLORS["text"]};
+                }}
+                .market-rank-value {{
+                    color: {PAGE_COLORS["yellow"]};
+                    font-weight: 800;
+                }}
+            </style>
+            {''.join(rows)}
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_title_yearly_views_chart(title_name: str, country_df: pd.DataFrame) -> None:
+    """Render yearly viewing/performance totals for the selected title."""
+    with st.container(border=True):
+        title_df = _prepare_title_time_df(title_name, country_df)
+        metric_df, metric_label, format_type = resolve_title_metric(title_df)
+        st.markdown(f"#### {metric_label} per year")
+
+        if metric_df.empty:
+            _title_metric_empty_message(metric_label)
+            return
+
+        yearly_df = (
+            metric_df.groupby("year", as_index=False)["metric_value"]
+            .sum()
+            .sort_values("year")
+        )
+        yearly_df = yearly_df[yearly_df["year"].between(2021, 2025)].copy()
+        if yearly_df.empty:
+            _title_metric_empty_message(metric_label)
+            return
+
+        highlight_year = int(yearly_df.loc[yearly_df["metric_value"].idxmax(), "year"])
+        yearly_df["bar_color"] = yearly_df["year"].apply(
+            lambda year: "highlight" if int(year) == highlight_year else "standard"
+        )
+        yearly_df["label"] = yearly_df["metric_value"].apply(
+            lambda value: _format_metric_value(value, format_type)
+        )
+
+        fig = px.bar(
+            yearly_df,
+            x="year",
+            y="metric_value",
+            text="label",
+            color="bar_color",
+            color_discrete_map={
+                "standard": PAGE_COLORS["yellow"],
+                "highlight": PAGE_COLORS["orange"],
+            },
+            hover_data={"year": True, "metric_value": ":,.0f", "bar_color": False, "label": False},
+        )
+        fig.update_traces(textposition="outside", cliponaxis=False)
+        fig.update_layout(height=360)
+        fig.update_xaxes(type="category")
+        st.plotly_chart(_style_title_metric_figure(fig, metric_label), width="stretch")
+
+
+def _get_title_available_years(title_name: str, country_df: pd.DataFrame) -> list[int]:
+    """Return sorted years with title rows that can feed time-series charts."""
+    title_df = _prepare_title_time_df(title_name, country_df)
+    if title_df.empty or "year" not in title_df.columns:
+        return []
+    return sorted(title_df["year"].dropna().astype(int).unique().tolist())
+
+
+def render_title_monthly_views_chart(
+    title_name: str,
+    country_df: pd.DataFrame,
+) -> int | None:
+    """Render monthly viewing/performance totals and return the selected year."""
+    with st.container(border=True):
+        title_df = _prepare_title_time_df(title_name, country_df)
+        metric_df, metric_label, format_type = resolve_title_metric(title_df)
+        st.markdown(f"#### {metric_label} per month")
+
+        if metric_df.empty:
+            _title_metric_empty_message(metric_label)
+            return None
+
+        available_years = sorted(metric_df["year"].dropna().astype(int).unique().tolist())
+        if not available_years:
+            _title_metric_empty_message(metric_label)
+            return None
+
+        default_year = max(available_years)
+        selected_year = st.selectbox(
+            "Select year",
+            available_years,
+            index=available_years.index(default_year),
+            key="title_profile_monthly_year_filter",
+            width="stretch",
+        )
+
+        month_lookup = pd.DataFrame(
+            {
+                "month_num": list(range(1, 13)),
+                "month_name": list(calendar.month_name)[1:],
+            }
+        )
+        monthly_df = (
+            metric_df[metric_df["year"] == selected_year]
+            .groupby("month_num", as_index=False)["metric_value"]
+            .sum()
+        )
+        monthly_df = month_lookup.merge(monthly_df, on="month_num", how="left")
+        monthly_df["metric_value"] = monthly_df["metric_value"].fillna(0)
+        monthly_df["label"] = monthly_df["metric_value"].apply(
+            lambda value: _format_metric_value(value, format_type)
+        )
+
+        fig = px.bar(
+            monthly_df,
+            x="month_name",
+            y="metric_value",
+            text="label",
+            color_discrete_sequence=[PAGE_COLORS["yellow"]],
+            hover_data={"month_name": True, "metric_value": ":,.0f", "month_num": False, "label": False},
+        )
+        fig.update_traces(textposition="outside", cliponaxis=False)
+        fig.update_layout(height=390)
+        fig.update_xaxes(categoryorder="array", categoryarray=list(calendar.month_name)[1:])
+        st.plotly_chart(_style_title_metric_figure(fig, metric_label), width="stretch")
+        return int(selected_year)
+
+
+def render_title_weekly_views_chart(
+    title_name: str,
+    country_df: pd.DataFrame,
+    selected_year: int,
+) -> None:
+    """Render weekly viewing/performance totals for the selected year/month."""
+    with st.container(border=True):
+        title_df = _prepare_title_time_df(title_name, country_df)
+        metric_df, metric_label, _format_type = resolve_title_metric(title_df)
+        st.markdown(f"#### {metric_label} per week")
+
+        if metric_df.empty or selected_year is None:
+            _title_metric_empty_message(metric_label)
+            return
+
+        year_df = metric_df[metric_df["year"] == selected_year].copy()
+        if year_df.empty:
+            st.info(f"No {metric_label.lower()} data is available for {selected_year}.")
+            return
+
+        month_options = ["All months"] + list(calendar.month_name)[1:]
+        selected_month = st.selectbox(
+            "Select month",
+            month_options,
+            key="title_profile_weekly_month_filter",
+            width="stretch",
+        )
+
+        if selected_month != "All months":
+            year_df = year_df[year_df["month_name"] == selected_month].copy()
+
+        if year_df.empty:
+            st.info("No weekly data is available for the selected month.")
+            return
+
+        weekly_df = (
+            year_df.groupby("week", as_index=False)["metric_value"]
+            .sum()
+            .sort_values("week")
+        )
+
+        fig = px.line(
+            weekly_df,
+            x="week",
+            y="metric_value",
+            markers=True,
+            color_discrete_sequence=[PAGE_COLORS["orange"]],
+            hover_data={"week": "|%Y-%m-%d", "metric_value": ":,.0f"},
+        )
+        fig.update_traces(line=dict(width=3), marker=dict(size=7))
+        fig.update_layout(height=390)
+        st.plotly_chart(_style_title_metric_figure(fig, metric_label), width="stretch")
+
+
+def render_selected_title_market_analytics(
+    title_name: str,
+    country_df: pd.DataFrame | None,
+) -> None:
+    """Render Market Reach plus extended title analytics for Country Insights."""
+    render_single_title_market_reach(title_name=title_name, country_df=country_df)
+
+    if country_df is None or country_df.empty:
+        return
+
+    selected_year = st.session_state.get("title_profile_monthly_year_filter")
+    if not isinstance(selected_year, int):
+        selected_year = None
+
+    nordic_col, yearly_col = st.columns(2, gap="large")
+    with nordic_col:
+        render_nordic_ranking_for_title(title_name, country_df, selected_year)
+    with yearly_col:
+        render_title_yearly_views_chart(title_name, country_df)
+
+    monthly_year = render_title_monthly_views_chart(title_name, country_df)
+    if monthly_year is not None:
+        render_title_weekly_views_chart(title_name, country_df, monthly_year)
 
 
 def render_country_reach_section(visible_titles: list[str]) -> None:
