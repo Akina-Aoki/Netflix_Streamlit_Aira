@@ -118,7 +118,7 @@ def show_views_chart(stats_left, stats_right, title_left, title_right):
         yaxis=dict(title=""),
         legend=dict(bgcolor="#2A2118"),
     )
-    st.plotly_chart(fig_views, use_container_width=True)
+    st.plotly_chart(fig_views, width="stretch")
 
 
 if title_left:

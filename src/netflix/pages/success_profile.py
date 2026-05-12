@@ -580,7 +580,7 @@ def success_profile() -> None:
         )
 
     fig = build_success_profile_figure(profile_df)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     scatter_titles = profile_df["show_title"].dropna().astype(str).tolist()
     render_country_reach_section(visible_titles=scatter_titles)

@@ -3,9 +3,11 @@
 # Syfte: Hjälpfunktioner för fil-läsning och datainsamling
 # ---------------------------------------------------------
 
-from netflix.utils.constants import DATA_PATH  # sökvägen till data-mappen
+import warnings
 import pandas as pd
 import streamlit as st
+
+from netflix.utils.constants import DATA_PATH 
 
 
 def read_textfile(path):
@@ -25,17 +27,30 @@ def read_css(path):
     )
 
 
+def _read_excel_with_default_style_warning_suppressed(path):
+    """Read Excel files while hiding openpyxl's harmless default-style warning."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="Workbook contains no default style, apply openpyxl's default",
+            category=UserWarning,
+            module="openpyxl.styles.stylesheet",
+        )
+        return pd.read_excel(path)
+
 @st.cache_data
 def get_weekly_df():
     """Läser in global_weekly Excel-data"""
-    return pd.read_excel(DATA_PATH / "global_weekly.xlsx")
-
+    return _read_excel_with_default_style_warning_suppressed(
+        DATA_PATH / "global_weekly.xlsx"
+    )
 
 @st.cache_data
 def get_alltime_df():
     """Läser in global_alltime Excel-data"""
-    return pd.read_excel(DATA_PATH / "global_alltime.xlsx")
-
+    return _read_excel_with_default_style_warning_suppressed(
+        DATA_PATH / "global_alltime.xlsx"
+    )
 
 @st.cache_data
 def get_global_df():

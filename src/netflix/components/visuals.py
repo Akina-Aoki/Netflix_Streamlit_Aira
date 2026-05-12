@@ -262,7 +262,7 @@ def render_title_selector_tiles(
                 "Selected" if is_selected else "View reach",
                 key=f"{key}_{title}",
                 type="primary" if is_selected else "secondary",
-                use_container_width=True,
+                width="stretch",
             ):
                 st.session_state[key] = title
                 st.rerun()
@@ -344,7 +344,7 @@ def render_single_title_market_reach(
     map_fig = make_country_reach_map(country_reach_df)
 
     if map_fig is not None:
-        st.plotly_chart(map_fig, use_container_width=True)
+        st.plotly_chart(map_fig, width="stretch")
     else:
         st.info("Map data is unavailable for the selected title.")
 
@@ -355,7 +355,7 @@ def render_single_title_market_reach(
         )
         st.dataframe(
             pd.DataFrame({"Country": country_names}),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 

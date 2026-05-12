@@ -18,7 +18,7 @@ read_css(STYLES_PATH / "main.css")
 
 # Detta är om man vill ha en sidebar
 # with st.sidebar:
-# st.image(str(IMAGE_PATH / "Logga_Streamly.png"), use_container_width=True)
+# st.image(str(IMAGE_PATH / "Logga_Streamly.png"), width = "stretch")
 
 pages = [
     st.Page("pages/country_insights.py", title="🏠Home"),

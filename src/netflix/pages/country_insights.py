@@ -473,7 +473,7 @@ def country_insights() -> None:
             with st.container(border=True):
                 render_card_header(title_context)
                 st.plotly_chart(
-                    build_top10_bar_figure(top10_df), use_container_width=True
+                    build_top10_bar_figure(top10_df), width="stretch"
                 )
 
         with donut_col:
@@ -483,7 +483,7 @@ def country_insights() -> None:
                 chart_col, stat_col = st.columns([1.2, 1])
                 with chart_col:
                     st.plotly_chart(
-                        build_donut_figure(counts_df), use_container_width=True
+                        build_donut_figure(counts_df), width="stretch"
                     )
                 with stat_col:
                     films_count = int(
