@@ -58,7 +58,7 @@ def _normalize_title(value: object) -> str:
 
 
 def prepare_country_reach_data(
-    country_df: pd.DataFrame,
+    country_df: pd.DataFrame | None,
     selected_title: str,
 ) -> tuple[pd.DataFrame, int, list[str]]:
     """Prepare total country-level reach data for a selected title.
@@ -69,11 +69,15 @@ def prepare_country_reach_data(
     """
     required_columns = {"country_name", "show_title"}
 
-    if (
-        country_df.empty
-        or not selected_title
-        or not required_columns.issubset(country_df.columns)
-    ):
+    if country_df is None or country_df.empty or not selected_title:
+        return pd.DataFrame(), 0, []
+
+    if "show_title" not in country_df.columns:
+        return pd.DataFrame(), 0, []
+    
+    has_country_name = "country_name" in country_df.columns
+    has_country_iso2 = "country_iso2" in country_df.columns
+    if not has_country_name and not has_country_iso2:
         return pd.DataFrame(), 0, []
 
     normalized_selected_title = _normalize_title(selected_title)
@@ -81,15 +85,78 @@ def prepare_country_reach_data(
         country_df["show_title"].apply(_normalize_title) == normalized_selected_title
     ].copy()
 
+    if filtered_df.empty:
+        return pd.DataFrame(), 0, []
+
     if "weekly_rank" in filtered_df.columns:
         weekly_rank = pd.to_numeric(filtered_df["weekly_rank"], errors="coerce")
         filtered_df = filtered_df[weekly_rank.between(1, 10)].copy()
 
-    filtered_df = filtered_df.dropna(subset=["country_name"]).copy()
 
-    country_names = sorted(filtered_df["country_name"].astype(str).unique().tolist())
+    valid_country_mask = pd.Series(False, index=filtered_df.index)
+    if has_country_name:
+        valid_country_mask = valid_country_mask | filtered_df["country_name"].notna()
+    if has_country_iso2:
+        valid_country_mask = valid_country_mask | filtered_df["country_iso2"].notna()
+    filtered_df = filtered_df[valid_country_mask].copy()
 
-    return filtered_df, len(country_names), country_names
+    if filtered_df.empty:
+        return pd.DataFrame(), 0, []
+
+    if has_country_name:
+        filtered_df["country_name"] = filtered_df["country_name"].astype(str).str.strip()
+    else:
+        filtered_df["country_name"] = ""
+
+    if has_country_iso2:
+        filtered_df["country_iso2"] = (
+            filtered_df["country_iso2"].astype(str).str.strip().str.upper()
+        )
+
+
+    country_key = "country_iso2" if has_country_iso2 else "country_name"
+    grouped_columns = [country_key]
+    if has_country_name and country_key != "country_name":
+        grouped_columns.append("country_name")
+
+    aggregations: dict[str, tuple[str, str]] = {
+        "appearances": ("show_title", "count"),
+    }
+    if "weekly_rank" in filtered_df.columns:
+        filtered_df["weekly_rank"] = pd.to_numeric(
+            filtered_df["weekly_rank"], errors="coerce"
+        )
+        aggregations["best_rank"] = ("weekly_rank", "min")
+    if "week" in filtered_df.columns:
+        filtered_df["week"] = pd.to_datetime(filtered_df["week"], errors="coerce")
+        aggregations["latest_week"] = ("week", "max")
+
+    reach_df = (
+        filtered_df.dropna(subset=[country_key])
+        .groupby(grouped_columns, as_index=False)
+        .agg(**aggregations)
+    )
+
+    if reach_df.empty:
+        return pd.DataFrame(), 0, []
+
+    if "country_name" not in reach_df.columns:
+        reach_df["country_name"] = reach_df[country_key].astype(str)
+    else:
+        missing_names = reach_df["country_name"].isna() | (
+            reach_df["country_name"].astype(str).str.strip() == ""
+        )
+        reach_df.loc[missing_names, "country_name"] = reach_df.loc[
+            missing_names, country_key
+        ].astype(str)
+
+    reach_df["show_title"] = selected_title
+
+    country_names = sorted(
+        reach_df["country_name"].dropna().astype(str).unique().tolist()
+    )
+
+    return reach_df, int(reach_df[country_key].nunique()), country_names
 
 
 @st.cache_data

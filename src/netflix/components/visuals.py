@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from netflix.utils.helpers import get_country_df
 from netflix.utils.helpers import get_country_df, prepare_country_reach_data
 
 PAGE_COLORS = {
@@ -102,37 +101,89 @@ def make_country_choropleth(df: pd.DataFrame, selected_country: str):
 
 def make_country_reach_map(country_reach_df: pd.DataFrame):
     """Create a dark themed world map highlighting reached Top 10 markets."""
-    if country_reach_df.empty or "country_name" not in country_reach_df.columns:
+    if country_reach_df.empty:
         return None
 
-    columns = ["country_name"]
-    if "country_iso2" in country_reach_df.columns:
-        columns.append("country_iso2")
+    has_country_name = "country_name" in country_reach_df.columns
+    has_country_iso2 = "country_iso2" in country_reach_df.columns
+    if not has_country_name and not has_country_iso2:
+        return None
+
+    columns = []
+    for column in [
+        "country_name",
+        "country_iso2",
+        "show_title",
+        "best_rank",
+        "appearances",
+        "latest_week",
+    ]:
+        if column in country_reach_df.columns:
+            columns.append(column)
+
+    drop_subset = ["country_iso2"] if has_country_iso2 else ["country_name"]
 
     countries = (
         country_reach_df[columns]
-        .dropna(subset=["country_name"])
-        .drop_duplicates()
+        .dropna(subset=drop_subset)
+        .drop_duplicates(subset=drop_subset)
         .copy()
     )
 
     if countries.empty:
         return None
+    
+
+    if "country_name" not in countries.columns:
+        countries["country_name"] = countries["country_iso2"].astype(str)
+    else:
+        missing_names = countries["country_name"].isna() | (
+            countries["country_name"].astype(str).str.strip() == ""
+        )
+        if has_country_iso2:
+            countries.loc[missing_names, "country_name"] = countries.loc[
+                missing_names, "country_iso2"
+            ].astype(str)
 
     location_column = "country_name"
     location_mode = "country names"
-    custom_data = ["country_name"]
 
-    if "country_iso2" in countries.columns:
+    if has_country_iso2:
         countries["iso3"] = countries["country_iso2"].apply(_iso2_to_iso3)
 
         if countries["iso3"].notna().any():
             countries = countries.dropna(subset=["iso3"]).copy()
             location_column = "iso3"
             location_mode = "ISO-3"
-            custom_data = ["country_name", "country_iso2"]
+    if countries.empty:
+        return None
+    
 
     countries["reached"] = 1
+
+    hover_parts = ["<b>%{customdata[0]}</b>"]
+    custom_data = ["country_name"]
+
+    if "show_title" in countries.columns:
+        hover_parts.append("Title: %{customdata[1]}")
+        custom_data.append("show_title")
+    if "best_rank" in countries.columns:
+        countries["best_rank_label"] = countries["best_rank"].apply(
+            lambda value: f"#{int(value)}" if pd.notna(value) else "N/A"
+        )
+        hover_parts.append(f"Best rank: %{{customdata[{len(custom_data)}]}}")
+        custom_data.append("best_rank_label")
+    if "appearances" in countries.columns:
+        hover_parts.append(f"Top 10 appearances: %{{customdata[{len(custom_data)}]}}")
+        custom_data.append("appearances")
+    if "latest_week" in countries.columns:
+        countries["latest_week_label"] = pd.to_datetime(
+            countries["latest_week"], errors="coerce"
+        ).dt.strftime("%Y-%m-%d")
+
+        countries["latest_week_label"] = countries["latest_week_label"].fillna("N/A")
+        hover_parts.append(f"Latest week: %{{customdata[{len(custom_data)}]}}")
+        custom_data.append("latest_week_label")
 
     fig = px.choropleth(
         countries,
@@ -174,8 +225,7 @@ def make_country_reach_map(country_reach_df: pd.DataFrame):
     fig.update_traces(
         marker_line_color="rgba(15, 13, 11, 0.75)",
         marker_line_width=0.6,
-        hovertemplate="%{hovertext}<extra></extra>",
-    )
+        hovertemplate="<br>".join(hover_parts) + "<extra></extra>",)
 
     return fig
 
@@ -220,31 +270,54 @@ def render_title_selector_tiles(
     return st.session_state[key]
 
 
-def render_country_reach_section(visible_titles: list[str]) -> None:
-    """Render Market Reach for the three titles visible in Success Profile."""
-    st.markdown(
-        """
-        <section class="market-reach-section">
-            <div class="home-section-title">Market Reach</div>
-            <div class="home-section-subtitle">
-                See how widely the selected Success Profile title reached
-                Netflix Top 10 markets across all available country-level data.
-            </div>
-        </section>
-        """,
-        unsafe_allow_html=True,
-    )
+def render_single_title_market_reach(
+    title_name: str,
+    country_df: pd.DataFrame | None,
+    *,
+    show_country_table: bool = False,
+    show_header: bool = True,
+) -> None:
+    """Render Market Reach for one selected title across all country data."""
+    if show_header:
+        st.markdown(
+            """
+            <section class="market-reach-section">
+                <div class="home-section-title">Market Reach</div>
+                <div class="home-section-subtitle">
+                    See how widely this title reached Netflix Top 10 markets across
+                    all available country-level data.
+                </div>
+            </section>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    selected_title = render_title_selector_tiles(visible_titles)
 
-    if not selected_title:
-        st.info("No Success Profile titles are available for Market Reach.")
+    if not title_name:
+        st.info("Select a title to view market reach.")
+        return
+    
+
+    if country_df is None or country_df.empty:
+        st.warning("Country-level data is not available for market reach.")
         return
 
-    country_df = get_country_df()
+    if "show_title" not in country_df.columns:
+        st.warning("Country-level data is not available for market reach.")
+        return
+
+    if (
+        "country_name" not in country_df.columns
+        and "country_iso2" not in country_df.columns
+    ):
+        st.warning(
+            "Country-level data is missing country identifiers for market reach."
+        )
+        return
+
     country_reach_df, country_reach, country_names = prepare_country_reach_data(
         country_df=country_df,
-        selected_title=selected_title,
+        selected_title=title_name,
     )
 
     st.markdown(
@@ -261,9 +334,7 @@ def render_country_reach_section(visible_titles: list[str]) -> None:
     )
 
     if country_reach_df.empty:
-        st.warning(
-            "No country-level Top 10 markets were found for the selected title."
-        )
+        st.warning("No market reach data available for this title.")
         return
 
     st.markdown(
@@ -277,12 +348,41 @@ def render_country_reach_section(visible_titles: list[str]) -> None:
     else:
         st.info("Map data is unavailable for the selected title.")
 
+    if show_country_table:
+        st.markdown(
+            '<div class="market-reach-map-heading">Reached countries</div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            pd.DataFrame({"Country": country_names}),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
+def render_country_reach_section(visible_titles: list[str]) -> None:
+    """Render Market Reach for the titles visible in Success Profile."""
     st.markdown(
-        '<div class="market-reach-map-heading">Reached countries</div>',
+        """
+        <section class="market-reach-section">
+            <div class="home-section-title">Market Reach</div>
+            <div class="home-section-subtitle">
+                See how widely the selected Success Profile title reached
+                Netflix Top 10 markets across all available country-level data.
+            </div>
+        </section>
+        """,        
         unsafe_allow_html=True,
     )
-    st.dataframe(
-        pd.DataFrame({"Country": country_names}),
-        use_container_width=True,
-        hide_index=True,
+    selected_title = render_title_selector_tiles(visible_titles)
+
+    if not selected_title:
+        st.info("No Success Profile titles are available for Market Reach.")
+        return
+
+    render_single_title_market_reach(
+        title_name=selected_title,
+        country_df=get_country_df(),
+        show_country_table=True,
+        show_header=False,
     )

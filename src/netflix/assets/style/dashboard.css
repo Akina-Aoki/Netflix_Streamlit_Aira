@@ -973,6 +973,49 @@ li[role="option"]:hover {
   line-height: 1.05;
 }
 
+
+.market-reach-section {
+  margin-top: 1.45rem;
+}
+
+.market-reach-kpi-card {
+  background:
+    radial-gradient(circle at top right, rgba(247, 185, 82, 0.17), transparent 40%),
+    linear-gradient(180deg, var(--streamly-card) 0%, #17120E 100%);
+  border: 1px solid var(--streamly-border);
+  border-radius: 16px;
+  margin: 0.9rem 0 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.market-reach-map-heading {
+  color: var(--streamly-primary);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.86rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  margin: 1.05rem 0 0.55rem;
+  text-transform: uppercase;
+}
+
+.market-reach-tile {
+  background: linear-gradient(180deg, var(--streamly-card) 0%, #17120E 100%);
+  border: 1px solid var(--streamly-border);
+  border-radius: 14px;
+  color: var(--streamly-text);
+  font-family: "Inter", Arial, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-bottom: 0.45rem;
+  min-height: 58px;
+  padding: 0.85rem 0.95rem;
+}
+
+.market-reach-tile-selected {
+  border-color: var(--streamly-primary);
+  box-shadow: 0 0 0 1px rgba(247, 185, 82, 0.2);
+}
+
 @media (max-width: 900px) {
   .title-profile-hero,
   .title-profile-kpi-grid {
