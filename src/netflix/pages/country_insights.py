@@ -17,7 +17,7 @@ from netflix.components.home_summary import render_home_summary
 from netflix.components.filters import render_labeled_selectbox
 from netflix.components.footer import render_disclaimer_footer
 from netflix.components.title_profile import (get_all_title_profile_options, render_title_profile_section,)
-from netflix.components.visuals import render_single_title_market_reach
+from netflix.components.visuals import render_selected_title_market_analytics
 from netflix.utils.constants import STYLES_PATH
 from netflix.utils.helpers import (get_country_df, get_global_df, get_metadata_df, get_weekly_df, read_css,)
 
@@ -547,7 +547,7 @@ def country_insights() -> None:
                 genre_records_df=profile_global_history_df,
             )
 
-            render_single_title_market_reach(
+            render_selected_title_market_analytics(
                 title_name=selected_profile_title,
                 country_df=get_country_df(),
             )
