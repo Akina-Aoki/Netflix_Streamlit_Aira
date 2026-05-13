@@ -6,18 +6,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from netflix.components.country_charts import (build_popularity_month_figure, build_popularity_week_figure, build_popularity_year_figure,)
+from netflix.components.html_templates import load_html_template, render_html_template
+from netflix.components.theme import NORDIC_COUNTRIES, NORDIC_FLAGS, STREAMLY_COLORS
+from netflix.utils.country_insights import (build_title_monthly_popularity_df, build_title_weekly_popularity_df, build_title_yearly_popularity_df, prepare_title_time_df, resolve_title_metric,)
 from netflix.utils.helpers import get_country_df, prepare_country_reach_data
-
-PAGE_COLORS = {
-    "bg": "#0F0D0B",
-    "card": "#1A1612",
-    "border": "#2A2118",
-    "yellow": "#F7B952",
-    "orange": "#E8622A",
-    "amber": "#FFB84D",
-    "text": "#F5F0E8",
-    "muted": "#9E9689",
-}
 
 
 def _iso2_to_iso3(iso2_code: str) -> str | None:
@@ -73,25 +66,25 @@ def make_country_choropleth(df: pd.DataFrame, selected_country: str):
         custom_data=custom_data,
         color="is_selected",
         color_continuous_scale=[
-            PAGE_COLORS["muted"],
-            PAGE_COLORS["yellow"],
+            STREAMLY_COLORS["muted"],
+            STREAMLY_COLORS["yellow"],
         ],
         range_color=(0, 1),
     )
 
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor=PAGE_COLORS["card"],
-        plot_bgcolor=PAGE_COLORS["card"],
+        paper_bgcolor=STREAMLY_COLORS["card"],
+        plot_bgcolor=STREAMLY_COLORS["card"],
         font=dict(
-            color=PAGE_COLORS["text"],
+            color=STREAMLY_COLORS["text"],
             family="Segoe UI, sans-serif",
         ),
         coloraxis_showscale=False,
         geo=dict(
             showframe=False,
             showcoastlines=False,
-            bgcolor=PAGE_COLORS["card"],
+            bgcolor=STREAMLY_COLORS["card"],
             projection_type="natural earth",
         ),
         height=360,
@@ -193,25 +186,25 @@ def make_country_reach_map(country_reach_df: pd.DataFrame):
         hover_name="country_name",
         custom_data=custom_data,
         color="reached",
-        color_continuous_scale=[PAGE_COLORS["orange"], PAGE_COLORS["yellow"]],
+        color_continuous_scale=[STREAMLY_COLORS["orange"], STREAMLY_COLORS["yellow"]],
         range_color=(0, 1),
     )
 
     fig.update_layout(
         height=430,
         margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor=PAGE_COLORS["card"],
-        plot_bgcolor=PAGE_COLORS["card"],
+        paper_bgcolor=STREAMLY_COLORS["card"],
+        plot_bgcolor=STREAMLY_COLORS["card"],
         font=dict(
-            color=PAGE_COLORS["text"],
+            color=STREAMLY_COLORS["text"],
             family="Segoe UI, sans-serif",
         ),
         coloraxis_showscale=False,
         geo=dict(
-            bgcolor=PAGE_COLORS["card"],
+            bgcolor=STREAMLY_COLORS["card"],
             landcolor="#2A2118",
-            lakecolor=PAGE_COLORS["card"],
-            oceancolor=PAGE_COLORS["card"],
+            lakecolor=STREAMLY_COLORS["card"],
+            oceancolor=STREAMLY_COLORS["card"],
             projection_type="natural earth",
             showcoastlines=False,
             showcountries=True,
@@ -250,14 +243,10 @@ def render_title_selector_tiles(
         is_selected = st.session_state[key] == title
         with column:
             selected_class = "market-reach-tile-selected" if is_selected else ""
-            safe_title = html.escape(title)
-            st.markdown(
-                f"""
-                <div class="market-reach-tile {selected_class}">
-                    <span>{safe_title}</span>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            render_html_template(
+                "market_reach_tile.html",
+                selected_class=selected_class,
+                title=title,
             )
             if st.button(
                 "Selected" if is_selected else "View reach",
@@ -280,17 +269,13 @@ def render_single_title_market_reach(
 ) -> None:
     """Render Market Reach for one selected title across all country data."""
     if show_header:
-        st.markdown(
-            """
-            <section class="market-reach-section">
-                <div class="home-section-title">Market Reach</div>
-                <div class="home-section-subtitle">
-                    See how widely this title reached Netflix Top 10 markets across
-                    all available country-level data.
-                </div>
-            </section>
-            """,
-            unsafe_allow_html=True,
+        render_html_template(
+            "market_reach_section.html",
+            title="Market Reach",
+            subtitle=(
+                "See how widely this title reached Netflix Top 10 markets across "
+                "all available country-level data."
+            ),
         )
 
 
@@ -321,27 +306,18 @@ def render_single_title_market_reach(
         selected_title=title_name,
     )
 
-    st.markdown(
-        f"""
-        <div class="market-reach-kpi-card">
-            <div class="success-kpi-label">Countries Reached</div>
-            <div class="success-kpi-value">{country_reach:,}</div>
-            <div class="home-kpi-note">
-                Unique markets where this title appeared in the Netflix Top 10.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    render_html_template(
+        "kpi_card.html",
+        label="Countries Reached",
+        value=f"{country_reach:,}",
+        note="Unique markets where this title appeared in the Netflix Top 10.",
     )
 
     if country_reach_df.empty:
         st.warning("No market reach data available for this title.")
         return
 
-    st.markdown(
-        '<div class="market-reach-map-heading">Reached markets map</div>',
-        unsafe_allow_html=True,
-    )
+    render_html_template("market_map_heading.html", title="Reached markets map")
     map_fig = make_country_reach_map(country_reach_df)
 
     if map_fig is not None:
@@ -350,166 +326,63 @@ def render_single_title_market_reach(
         st.info("Map data is unavailable for the selected title.")
 
     if show_country_table:
-        st.markdown(
-            '<div class="market-reach-map-heading">Reached countries</div>',
-            unsafe_allow_html=True,
-        )
+        render_html_template("market_map_heading.html", title="Reached countries")
         st.dataframe(
             pd.DataFrame({"Country": country_names}),
             width="stretch",
             hide_index=True,
         )
 
-def _normalize_title_for_match(value: object) -> str:
-    """Normalize title text for case-insensitive title analytics matching."""
-    if pd.isna(value):
-        return ""
-
-    return str(value).strip().casefold()
-
-
-def _filter_title_rows(title_name: str, country_df: pd.DataFrame | None) -> pd.DataFrame:
-    """Return country-level rows for the selected title without raising on bad data."""
-    if country_df is None or country_df.empty or not title_name:
-        return pd.DataFrame()
-
-    if "show_title" not in country_df.columns:
-        return pd.DataFrame()
-
-    normalized_title = _normalize_title_for_match(title_name)
-    return country_df[
-        country_df["show_title"].apply(_normalize_title_for_match) == normalized_title
-    ].copy()
-
-
-def _prepare_title_time_df(title_name: str, country_df: pd.DataFrame | None) -> pd.DataFrame:
-    """Filter title rows and add parsed week/year/month columns when possible."""
-    title_df = _filter_title_rows(title_name, country_df)
-    if title_df.empty or "week" not in title_df.columns:
-        return pd.DataFrame()
-
-    title_df["week"] = pd.to_datetime(title_df["week"], errors="coerce")
-    title_df = title_df.dropna(subset=["week"]).copy()
-    if title_df.empty:
-        return pd.DataFrame()
-
-    title_df["year"] = title_df["week"].dt.year
-    title_df["month_num"] = title_df["week"].dt.month
-    title_df["month_name"] = title_df["week"].dt.month_name()
-    return title_df
-
-
-def resolve_title_metric(df: pd.DataFrame) -> tuple[pd.DataFrame, str, str]:
-    """
-    Add a numeric metric_value column using the best available real metric.
-
-    Returns the prepared dataframe, chart label, and formatting type.
-    """
-    if df is None or df.empty:
-        return pd.DataFrame(), "Performance score", "number"
-
-    metric_candidates = [
-        ("weekly_hours_viewed", "Hours viewed", "compact"),
-        ("hours_viewed", "Hours viewed", "compact"),
-        ("views", "Number of views", "compact"),
-    ]
-
-    metric_df = df.copy()
-    for column, label, format_type in metric_candidates:
-        if column in metric_df.columns:
-            metric_df["metric_value"] = pd.to_numeric(
-                metric_df[column], errors="coerce"
-            )
-            metric_df = metric_df.dropna(subset=["metric_value"]).copy()
-            return metric_df, label, format_type
-
-    if "weekly_rank" not in metric_df.columns:
-        return pd.DataFrame(), "Performance score", "number"
-
-    metric_df["weekly_rank"] = pd.to_numeric(metric_df["weekly_rank"], errors="coerce")
-    metric_df["metric_value"] = 11 - metric_df["weekly_rank"]
-    metric_df = metric_df[
-        metric_df["metric_value"].notna() & (metric_df["metric_value"] > 0)
-    ].copy()
-    return metric_df, "Performance score", "number"
-
-
-def _format_metric_value(value: float, format_type: str) -> str:
-    """Format metric labels compactly for chart annotations."""
-    if pd.isna(value):
-        return "0"
-
-    value = float(value)
-    if format_type == "compact":
-        if abs(value) >= 1_000_000_000:
-            return f"{value / 1_000_000_000:.1f}B"
-        if abs(value) >= 1_000_000:
-            return f"{value / 1_000_000:.1f}M"
-        if abs(value) >= 1_000:
-            return f"{value / 1_000:.1f}K"
-    return f"{value:,.0f}"
-
-
 def _title_metric_empty_message(metric_label: str) -> None:
     """Render a consistent message when no chart data is available."""
     st.info(f"No {metric_label.lower()} data is available for this title.")
 
 
-def _style_title_metric_figure(fig):
-    """Apply Streamly dark styling to uncluttered title-profile metric charts."""
-    fig.update_layout(
-        paper_bgcolor=PAGE_COLORS["card"],
-        plot_bgcolor=PAGE_COLORS["card"],
-        font=dict(color=PAGE_COLORS["text"], family="Segoe UI, sans-serif"),
-        margin=dict(l=10, r=20, t=20, b=35),
-        showlegend=False,
-    )
-    fig.update_xaxes(title_text=None, showgrid=False)
-    fig.update_yaxes(
-        title_text=None,
-        showticklabels=False,
-        showgrid=False,
-        zeroline=False,
-    )
-    return fig
-
-
 def render_nordic_ranking_for_title(
     title_name: str,
-    country_df: pd.DataFrame,
+    country_df: pd.DataFrame | None,
     selected_year: int | None = None,
 ) -> None:
     """Show the selected title's best weekly rank across Nordic countries."""
+    no_data_message = "No Nordic ranking data is available for this title and year."
     with st.container(border=True):
         st.markdown("#### Ranking across the Nordic countries")
+        st.caption("Best weekly Top 10 rank in selected/latest year")
 
-        required_columns = {"country_name", "weekly_rank"}
-        title_df = _prepare_title_time_df(title_name, country_df)
-        if title_df.empty or not required_columns.issubset(title_df.columns):
-            st.info("No Nordic ranking data is available for this title.")
+        source_columns = {"show_title", "country_name", "weekly_rank"}
+        if (
+            country_df is None
+            or country_df.empty
+            or not source_columns.issubset(country_df.columns)
+        ):
+            st.info(no_data_message)
             return
 
-        nordic_flags = {
-            "Sweden": "🇸🇪",
-            "Norway": "🇳🇴",
-            "Denmark": "🇩🇰",
-            "Finland": "🇫🇮",
-            "Iceland": "🇮🇸",
-        }
+        required_columns = {"country_name", "weekly_rank", "year"}
+        title_df = prepare_title_time_df(title_name, country_df)
+        if title_df.empty or not required_columns.issubset(title_df.columns):
+            st.info(no_data_message)
+            return
+        
         title_df["weekly_rank"] = pd.to_numeric(title_df["weekly_rank"], errors="coerce")
-        title_df = title_df[title_df["country_name"].isin(nordic_flags)].copy()
+        title_df = title_df[title_df["country_name"].isin(NORDIC_COUNTRIES)].copy()
         title_df = title_df.dropna(subset=["weekly_rank", "year"])
 
         if title_df.empty:
-            st.info("No Nordic ranking data is available for this title.")
+            st.info(no_data_message)
             return
 
-        if selected_year is None or selected_year not in set(title_df["year"].astype(int)):
+        title_df["year"] = title_df["year"].astype(int)
+        available_years = set(title_df["year"].unique())
+        if selected_year is None:
             selected_year = int(title_df["year"].max())
+        elif selected_year not in available_years:
+            st.info(no_data_message)
+            return
 
         year_df = title_df[title_df["year"] == selected_year].copy()
         if year_df.empty:
-            st.info(f"No Nordic ranking data is available for {selected_year}.")
+            st.info(no_data_message)
             return
 
         best_rank_by_country = (
@@ -521,55 +394,29 @@ def render_nordic_ranking_for_title(
         lookup = dict(
             zip(best_rank_by_country["country_name"], best_rank_by_country["best_rank"], strict=False)
         )
-        st.caption(f"Best weekly Top 10 rank in {selected_year} (1 is best).")
 
         rows = []
-        for country, flag in nordic_flags.items():
-            best_rank = lookup.get(country)
+        row_template = load_html_template("nordic_rank_row.html")
+        for country_name in NORDIC_COUNTRIES:
+            flag = NORDIC_FLAGS.get(country_name, "")
+            best_rank = lookup.get(country_name)
             rank_label = f"#{int(best_rank)}" if pd.notna(best_rank) else "No data"
             muted_class = " market-rank-row-muted" if pd.isna(best_rank) else ""
             rows.append(
-                (
-                    f'<div class="market-rank-row{muted_class}">'
-                    f'<div class="market-rank-country"><span>{flag}</span>'
-                    f'<strong>{country}</strong></div>'
-                    f'<div class="market-rank-value">{rank_label}</div>'
-                    '</div>'
+                row_template.format(
+                    muted_class=html.escape(muted_class),
+                    flag=html.escape(flag),
+                    country_name=html.escape(country_name),
+                    rank_label=html.escape(rank_label),
                 )
             )
 
-        rank_styles = f"""
-<style>
-.market-rank-row {{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.7rem 0.85rem;
-    margin: 0.45rem 0;
-    border: 1px solid rgba(247, 185, 82, 0.18);
-    border-radius: 0.8rem;
-    background: rgba(42, 33, 24, 0.45);
-}}
-.market-rank-row-muted {{ opacity: 0.62; }}
-.market-rank-country {{
-    display: flex;
-    gap: 0.55rem;
-    align-items: center;
-    color: {PAGE_COLORS["text"]};
-}}
-.market-rank-value {{
-    color: {PAGE_COLORS["yellow"]};
-    font-weight: 800;
-}}
-</style>
-"""
-        st.markdown(f"{rank_styles}{''.join(rows)}", unsafe_allow_html=True)
-
+        st.markdown("".join(rows), unsafe_allow_html=True)
 
 def render_title_yearly_views_chart(title_name: str, country_df: pd.DataFrame) -> None:
     """Render yearly viewing/performance totals for the selected title."""
     with st.container(border=True):
-        title_df = _prepare_title_time_df(title_name, country_df)
+        title_df = prepare_title_time_df(title_name, country_df)
         metric_df, metric_label, _format_type = resolve_title_metric(title_df)
         st.markdown("#### Popularity Per Year")
 
@@ -577,40 +424,16 @@ def render_title_yearly_views_chart(title_name: str, country_df: pd.DataFrame) -
             _title_metric_empty_message(metric_label)
             return
 
-        yearly_df = (
-            metric_df.groupby("year", as_index=False)["metric_value"]
-            .sum()
-            .sort_values("year")
-        )
-        yearly_df = yearly_df[yearly_df["year"].between(2021, 2025)].copy()
+        yearly_df = build_title_yearly_popularity_df(metric_df)
         if yearly_df.empty:
             _title_metric_empty_message(metric_label)
             return
 
-        highlight_year = int(yearly_df.loc[yearly_df["metric_value"].idxmax(), "year"])
-        yearly_df["bar_color"] = yearly_df["year"].apply(
-            lambda year: "highlight" if int(year) == highlight_year else "standard"
-        )
-
-        fig = px.bar(
-            yearly_df,
-            x="year",
-            y="metric_value",
-            color="bar_color",
-            color_discrete_map={
-                "standard": PAGE_COLORS["yellow"],
-                "highlight": PAGE_COLORS["orange"],
-            },
-            hover_data={"year": True, "metric_value": ":,.0f", "bar_color": False},
-        )
-        fig.update_traces(text=None, texttemplate=None, cliponaxis=False)
-        fig.update_layout(height=360)
-        fig.update_xaxes(type="category")
-        st.plotly_chart(_style_title_metric_figure(fig), width="stretch")
+        st.plotly_chart(build_popularity_year_figure(yearly_df), width="stretch")
 
 def _get_title_available_years(title_name: str, country_df: pd.DataFrame) -> list[int]:
     """Return sorted years with title rows that can feed time-series charts."""
-    title_df = _prepare_title_time_df(title_name, country_df)
+    title_df = prepare_title_time_df(title_name, country_df)
     if title_df.empty or "year" not in title_df.columns:
         return []
     return sorted(title_df["year"].dropna().astype(int).unique().tolist())
@@ -622,7 +445,7 @@ def render_title_monthly_views_chart(
 ) -> int | None:
     """Render monthly viewing/performance totals and return the selected year."""
     with st.container(border=True):
-        title_df = _prepare_title_time_df(title_name, country_df)
+        title_df = prepare_title_time_df(title_name, country_df)
         metric_df, metric_label, _format_type = resolve_title_metric(title_df)
         st.markdown("#### Popularity By Month")
 
@@ -644,32 +467,14 @@ def render_title_monthly_views_chart(
             width="stretch",
         )
 
-        month_lookup = pd.DataFrame(
-            {
-                "month_num": list(range(1, 13)),
-                "month_name": list(calendar.month_name)[1:],
-            }
-        )
-        monthly_df = (
-            metric_df[metric_df["year"] == selected_year]
-            .groupby("month_num", as_index=False)["metric_value"]
-            .sum()
-        )
-        monthly_df = month_lookup.merge(monthly_df, on="month_num", how="left")
-        monthly_df["metric_value"] = monthly_df["metric_value"].fillna(0)
+        monthly_df = build_title_monthly_popularity_df(metric_df, selected_year)
 
 
-        fig = px.bar(
-            monthly_df,
-            x="month_name",
-            y="metric_value",
-            color_discrete_sequence=[PAGE_COLORS["yellow"]],
-            hover_data={"month_name": True, "metric_value": ":,.0f", "month_num": False},
+        st.plotly_chart(
+            build_popularity_month_figure(monthly_df, list(calendar.month_name)[1:]),
+            width="stretch",
         )
-        fig.update_traces(text=None, texttemplate=None, cliponaxis=False)
-        fig.update_layout(height=390)
-        fig.update_xaxes(categoryorder="array", categoryarray=list(calendar.month_name)[1:])
-        st.plotly_chart(_style_title_metric_figure(fig), width="stretch")
+
         return int(selected_year)
 
 
@@ -680,7 +485,7 @@ def render_title_weekly_views_chart(
 ) -> None:
     """Render weekly viewing/performance totals for the selected year/month."""
     with st.container(border=True):
-        title_df = _prepare_title_time_df(title_name, country_df)
+        title_df = prepare_title_time_df(title_name, country_df)
         metric_df, metric_label, _format_type = resolve_title_metric(title_df)
         st.markdown(f"#### Popularity By Week")
 
@@ -708,28 +513,14 @@ def render_title_weekly_views_chart(
             st.info("No weekly data is available for the selected month.")
             return
 
-        weekly_df = (
-            year_df.groupby("week", as_index=False)["metric_value"]
-            .sum()
-            .sort_values("week")
-        )
+        weekly_df = build_title_weekly_popularity_df(year_df)
 
-        fig = px.line(
-            weekly_df,
-            x="week",
-            y="metric_value",
-            markers=True,
-            color_discrete_sequence=[PAGE_COLORS["orange"]],
-            hover_data={"week": "|%Y-%m-%d", "metric_value": ":,.0f"},
+        st.plotly_chart(
+            build_popularity_week_figure(
+                weekly_df, show_all_months=selected_month == "All months"
+            ),
+            width="stretch",
         )
-        fig.update_traces(line=dict(width=3), marker=dict(size=7), text=None, texttemplate=None)
-        fig.update_layout(height=390)
-        if selected_month == "All months":
-            fig.update_xaxes(dtick="M1", tickformat="%b")
-        else:
-            fig.update_xaxes(nticks=6, tickformat="%b %-d")
-        st.plotly_chart(_style_title_metric_figure(fig), width="stretch")
-
 
 def render_selected_title_market_analytics(
     title_name: str,
@@ -758,17 +549,13 @@ def render_selected_title_market_analytics(
 
 def render_country_reach_section(visible_titles: list[str]) -> None:
     """Render Market Reach for the titles visible in Success Profile."""
-    st.markdown(
-        """
-        <section class="market-reach-section">
-            <div class="home-section-title">Market Reach</div>
-            <div class="home-section-subtitle">
-                See how widely the selected Success Profile title reached
-                Netflix Top 10 markets across all available country-level data.
-            </div>
-        </section>
-        """,        
-        unsafe_allow_html=True,
+    render_html_template(
+        "market_reach_section.html",
+        title="Market Reach",
+        subtitle=(
+            "See how widely the selected Success Profile title reached Netflix Top 10 "
+            "markets across all available country-level data."
+        ),
     )
     selected_title = render_title_selector_tiles(visible_titles)
 
