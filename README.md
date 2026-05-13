@@ -1,127 +1,135 @@
-# Netflix Streamlit Dashboard
-- [Streamlit Project Link](https://netflix-top10-tudum-analysis.streamlit.app/)
+# Streamly — Netflix Top 10 Data Visualization App
 
-This project is a collaborative Data Engineering and UX project built with Streamlit.  
-The dashboard uses Netflix Top 10 data from Tudum by Netflix and turns it into an interactive web app called **Streamly**.
+[Open the Streamlit app](https://netflix-top10-tudum-analysis.streamlit.app/)
 
-The goal of the project is to make Netflix viewing patterns easier to explore. Users can look at country-level trends, compare titles, inspect successful shows and movies, and understand how different content performs across time.
+Streamly is a Streamlit dashboard that explores Netflix Top 10 / Tudum data. It helps users see which films and TV series perform well globally, how titles trend in different countries, and what kind of success pattern a title has.
 
-The project is built with a clear structure so the code is easier to maintain, reuse, and deploy. that follows DRY.
+I built this project from a Data Engineering and DRY (Don't Repeat Yourself) perspective: prepare the data, create reusable transformations, and present the results in a dashboard that is simple to use and easy to explain.
 
+## Main features
 
-## The dashboard includes these main pages:
+- Country Insights page with Netflix Top 10 title performance
+- Filters for country, year, month, and category
+- Films vs TV comparison
+- Title Profile Explorer with metadata, poster, and performance history
+- Market Reach view showing how many countries a title appeared in
+- Nordic country ranking for selected titles
+- Popularity views by year, month, and week
+- Success Profile page with title types such as Hype, High Retention, and Balanced
 
-- **🏠Country Insights Home**  
-  Shows Netflix Top 10 patterns by country, year, month, and category with single title profile that shows market reach, and timeline popularity information yearly, monthly and weekly.
+## Dataset
 
-- **⭐Best Movie and Serie**  
-  Allows users to compare two selected titles side by side.
+The data comes from Netflix Tudum Top 10 data and prepared project files in `src/netflix/assets/data/`.
 
-- **⭐Success Profile**  
-  Explores what successful Netflix titles have in common based on ranking, category, and time period.
+The app uses:
 
-The project follows a `src` folder structure and separates pages, components, helper functions, assets, and styling into different folders.
+- global weekly Top 10 data
+- global all-time Top 10 data
+- country-level Top 10 data
+- metadata for title details, posters, descriptions, genres, and trailers where available
 
+Important fields include `show_title`, `category`, `week`, `country_name`, `weekly_rank`, and `weekly_hours_viewed` where available.
 
-## Data Engineering Workflow
+## Metrics explained
 
-                    ┌──────────────────────────────────────────────┐
-                    │        Netflix Top 10 Data Assets            │
-                    │ src/netflix/assets/data/                     │
-                    │ - global_weekly.xlsx                         │
-                    │ - global_alltime.xlsx                        │
-                    │ - FactGlobal_Final.csv                       │
-                    │ - FactCountry_Final.csv                      │
-                    │ - DimMetaData_Final.csv                      │
-                    └─────────────────────┬────────────────────────┘
-                                          │
-                                          ▼
-                    ┌──────────────────────────────────────────────┐
-                    │         Data Loading & Helpers               │
-                    │ src/netflix/utils/helpers.py                 │
-                    │ - reads CSV / Excel files                    │
-                    │ - caches data                                │
-                    │ - shared helper functions                    │
-                    └─────────────────────┬────────────────────────┘
-                                          │
-                                          ▼
-                    ┌──────────────────────────────────────────────┐
-                    │         Constants & Asset Paths              │
-                    │ src/netflix/utils/constants.py               │
-                    │ - data paths                                 │
-                    │ - image paths                                │
-                    │ - style paths                                │
-                    └─────────────────────┬────────────────────────┘
-                                          │
-                                          ▼
-       ┌─────────────────────────────────────────────────────────────────────┐
-       │                    Streamlit Application Layer                      │
-       │                     src/netflix/app.py                              │
-       │             - defines navigation between pages                      │
-       └───────────────┬───────────────────────┬────────────────────────────┘
-                       │                       │
-                       │                       │
-                       ▼                       ▼
-    ┌──────────────────────────┐   ┌──────────────────────────┐
-    │     Reusable Components  │   │      Dashboard Pages     │
-    │ src/netflix/components/  │   │   src/netflix/pages/     │
-    │ - branding               │   │ - country_insights.py    │
-    │ - filters                │   │ - insights.py            │
-    │ - cards                  │   │ - success_profile.py     │
-    │ - footer                 │   │ - dashboard.py           │
-    │ - visuals                │   │                          │
-    └──────────────┬───────────┘   └──────────────┬───────────┘
-                   │                              │
-                   └──────────────┬───────────────┘
-                                  │
-                                  ▼
-                    ┌──────────────────────────────────────────────┐
-                    │           Visual Output Layer                │
-                    │ - KPI cards                                  │
-                    │ - filters                                    │
-                    │ - Plotly charts                              │
-                    │ - Matplotlib visuals                         │
-                    │ - insight sections                           │
-                    └─────────────────────┬────────────────────────┘
-                                          │
-                                          ▼
-                    ┌──────────────────────────────────────────────┐
-                    │     User Interface / Deployment Layer        │
-                    │ - Local host via Streamlit                   │
-                    │ - Streamlit Cloud deployment                 │
-                    │ - End users explore Netflix insights         │
-                    └──────────────────────────────────────────────┘
+### Performance Score
 
-
-## Repository Structure
+Netflix ranks titles from 1 to 10 each week. To make rankings easier to compare and aggregate, the app converts weekly rank into a score:
 
 ```text
-Netflix_Streamlit/
-├── src/
-│   └── netflix/
-│       ├── app.py                  # Main Streamlit entry point and page navigation
-│       ├── pages/                  
-│       │   ├── country_insights.py # Country-level Netflix Top 10 insights with weekly view
-│       │   ├── dashboard.py        # Dashboard page for focused datastorytelling analysis abour Russia
-│       │   ├── insights.py         # Best Movie and Serie comparison page
-│       │   └── success_profile.py  # Success pattern analysis for Netflix titles
-│ 
-│       ├── components/             # Reusable UI and visual building blocks
-│       │   ├── author_credit.py    # Creator credit section used in selected pages (Aira's)
-│       │   ├── branding.py         # Streamly branding and shared header elements
-│       │   ├── cards.py            # Reusable KPI and story card layouts
-│       │   ├── filters.py          # Shared filter logic for dashboard controls
-│       │   ├── footer.py           # Reusable disclaimer/footer component
-│       │   ├── home_summary.py     # Summary KPI section for the home page
-│       │   └── visuals.py          # Shared chart and visualization functions
-│ 
-│       ├── utils/                  # Shared helper logic
-│       │   ├── constants.py        # Central paths for data, images, styles, and assets
-│       │   └── helpers.py          # Cached data loading and CSS helper functions
-│       └── assets/                 # Project assets used by the Streamlit app
-│           ├── data/               # Netflix CSV and Excel data files
-│           ├── image/              # Logo and image assets
-│           ├── markdown/           # Optional markdown content
-│           └── style/              # CSS files for the Streamly design
-└── 
+performance_score = 11 - weekly_rank
 ```
+
+So rank 1 gets 10 points, rank 10 gets 1 point, and higher scores mean stronger performance.
+
+### Longevity
+
+Longevity counts how many weeks a title stays in the Top 10. A title with high longevity may not always have the biggest launch, but it stays relevant for longer.
+
+### Market Reach
+
+Market Reach counts how many countries a title appeared in. This helps show whether a title was popular in one market or reached many Netflix markets.
+
+## Code structure and DRY principles
+
+The project follows DRY principles, which means **“Don’t Repeat Yourself.”** Instead of repeating the same chart code, HTML, colors, and styling in every page, I moved reusable logic into components. This makes the app easier to maintain because changes only need to be made in one place.
+
+| Part | Responsibility |
+| --- | --- |
+| `country_insights.py` | Controls the page flow |
+| `country_sections.py` | Renders Streamlit page sections |
+| `country_charts.py` | Builds Plotly charts |
+| `utils/country_insights.py` | Prepares and transforms data |
+| `theme.py` | Stores shared colors/constants |
+| `html/` | Stores reusable HTML templates |
+| `dashboard.css` | Stores styling |
+
+## How Streamlit is used
+
+Streamly uses Streamlit for the app layout, filters, navigation, and chart rendering.
+
+The app uses:
+
+- `st.Page` and `st.navigation` for multi-page navigation
+- `st.columns` for layout
+- `st.container` for grouped sections and cards
+- `st.selectbox` for filters and title selectors
+- `st.plotly_chart` for interactive charts
+- `st.image` for logos and poster images
+- `st.dataframe` for table views when needed
+- `.streamlit/config.toml` for theme settings
+
+Charts use `width="stretch"` for responsive rendering.
+
+## Folder structure
+```
+src/netflix/
+├── app.py
+├── pages/
+│   ├── country_insights.py
+│   └── success_profile.py
+│
+├── components/
+│   ├── country_sections.py
+│   ├── country_charts.py
+│   ├── success_sections.py
+│   ├── success_charts.py
+│   ├── cards.py
+│   ├── branding.py
+│   ├── footer.py
+│   ├── theme.py
+│   └── html/
+│
+├── utils/
+│   ├── helpers.py
+│   ├── constants.py
+│   ├── country_insights.py
+│   └── success_profile.py
+│
+└── assets/
+    ├── data/
+    ├── image/
+    └── style/
+        ├── dashboard.css
+        └── main.css
+```
+
+## How to run locally
+
+```bash
+git clone <repository-url>
+cd Netflix_Streamlit_Aira
+uv sync
+uv run streamlit run src/netflix/app.py
+```
+
+If you are not using `uv`, install the project with pip and run Streamlit directly:
+
+```bash
+python -m pip install -e .
+streamlit run src/netflix/app.py
+```
+
+## Disclaimer / notes
+
+This project is for learning, portfolio, and data storytelling purposes. It uses Netflix Top 10 / Tudum data to explore viewing trends, but it should not be treated as a complete picture of all Netflix viewing behavior.

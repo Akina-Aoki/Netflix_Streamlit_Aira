@@ -1,79 +1,14 @@
+/* Global Streamlit app styling. Page/component styles live in dashboard.css. */
 
-/* Styling för alla rubriknivåer (H1, H2, H3, H4) */
+
+.stApp {
+  background: #0F0D0B;
+  color: #F5F0E8;
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+}
+
 h1, h2, h3, h4 {
-    color: #f1efee !important;
-    font-family: 'Segoe UI', !important;    /* Ger rubrikerna en guld/orange färg */
-    font-weight: 700 !important;                         /* Gör rubrikerna extra feta */
-}
-
-/* -- KPI-kort border och bakgrund för att synas mot mörk bakgrund */
-/* [data-testid="stMetric"] {
-    background-color: #1A1612;
-    border: 1px solid #F7B952;
-    border-radius: 8px;
-    padding: 1rem; 
-} */
-
-/* stora vita värden */
-[data-testid="stMetricValue"] {
-    color: #f5f0e8 !important;
-    font-size: 2.5rem !important;
-    font-weight: 500 !important;
-}
-
-/* Amber label ovanför */
-[data-testid="stMetricLabel"] {
-    color: #9E9689 !important;
-    font-size: 0.9rem !important;
-}
-
-/* KPI värde - amber färg */
-[data-testid="stMetricValue"] {
-    color: #f5f0e8 !important;
-}
-
-/* KPI label - sekunder textfärg */
-[data-testid="stMetricLabel"] {
-    color: #F5F0E8 !important;
-}
-
-/* Gör alla poster-bilder lika höga */
-/* [data-testid="stImage"] img {
-    height: 300px !important;
-    width: auto !important;
-    object-fit: cover !important;
-}
- */
-
- /* Shared disclaimer footer -------------------------------------------------- */
-.disclaimer-footer {
-    background:
-        linear-gradient(135deg, rgba(247, 185, 82, 0.08), rgba(232, 98, 42, 0.04)),
-        #1A1612;
-    border: 1px solid #2A2118;
-    border-radius: 14px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-    color: #9E9689;
-    margin-top: 2rem;
-    margin-bottom: 0.75rem;
-    padding: 0.85rem 1rem;
-}
-
-.disclaimer-title {
-    color: #F7B952;
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
-    font-size: 0.82rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    line-height: 1.2;
-    margin-bottom: 0.45rem;
-    text-transform: uppercase;
-}
-
-.disclaimer-text {
-    color: #9E9689;
-    font-family: "Inter", "Segoe UI", Arial, sans-serif;
-    font-size: 0.78rem;
-    line-height: 1.35;
-    margin: 0.12rem 0;
+  color: #F5F0E8 !important;
+  font-family: "Cormorant Garamond", "Segoe UI", Georgia, serif !important;
+  font-weight: 700 !important;
 }

@@ -32,4 +32,18 @@ NORDIC_FLAGS = {
     "Denmark": "🇩🇰",
     "Finland": "🇫🇮",
     "Iceland": "🇮🇸",
+
+}
+SUCCESS_SEGMENT_COLORS = {
+    "Hype": STREAMLY_COLORS["red"],
+    "Balanced": "#F4A261",
+    "High Retention": STREAMLY_COLORS["green"],
+}
+
+SUCCESS_PROFILE_CHART_COLORS = {
+    "background": STREAMLY_COLORS["text"],
+    "text": "#111111",
+    "muted_text": "#4A4A4A",
+    "axis": "#222222",
+    "vertical_guide": "#E8C87E",
 }
