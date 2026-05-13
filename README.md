@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img src="src/netflix/assets/image/about_app.png" alt="About this app section" width="850">
+  <img src="src/netflix/assets/image/1.png" alt="About this app section" width="850">
 </p>
 
 <p align="center">
