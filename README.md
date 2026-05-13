@@ -8,11 +8,11 @@
 
 <p align="center">
   <a href="https://netflix-top10-tudum-analysis.streamlit.app/">
-    Open the Streamlit app
+    <img src="https://img.shields.io/badge/Open%20Streamly%20App-FFB84D?style=for-the-badge&logo=streamlit&logoColor=white&labelColor=0F0D0B" alt="Open Streamly App">
   </a>
 </p>
 
-## Demo Video
+## 🎬 Demo Video
 [Netflix_Streamlit_Aira.webm](https://github.com/user-attachments/assets/3cab68be-c002-4193-b723-66efc442b02b)
 
 
@@ -45,7 +45,7 @@ The project follows DRY principles, which means **“Don’t Repeat Yourself.”
 | [`html/`](src/netflix/components/html/) | Stores reusable HTML templates |
 | [`dashboard.css`](src/netflix/assets/style/dashboard.css) | Stores styling |
 
-## Merics
+
 ![Metrics Used](src/netflix/assets/image/metrics.png)
 
 
