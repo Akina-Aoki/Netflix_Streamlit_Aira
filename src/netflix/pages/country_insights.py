@@ -3,7 +3,6 @@ The page orchestrates Country Insights by loading shared assets/data and delegat
 UI, chart, and data preparation work to reusable components and utilities.
 """
 
-
 import streamlit as st
 
 from netflix.components.author_credit import render_author_credit
@@ -14,6 +13,7 @@ from netflix.components.home_summary import render_home_summary
 from netflix.utils.constants import STYLES_PATH
 from netflix.utils.country_insights import prepare_country_insights_data
 from netflix.utils.helpers import read_css
+
 
 def _load_dashboard_css() -> None:
     """Load the shared dashboard stylesheet when it is available."""
@@ -31,6 +31,7 @@ def _render_page_intro() -> None:
         title="Top 10 Films and Movies Worldwide",
         subtitle="Explore what each country prefers and compare viewing patterns across markets.",
     )
+
 
 def country_insights() -> None:
     """Render the Country Insights page."""
@@ -63,6 +64,7 @@ def country_insights() -> None:
     render_market_reach_analytics_section(selected_profile_title)
     render_author_credit()
     render_disclaimer_footer()
+
 
 if __name__ == "__main__":
     country_insights()

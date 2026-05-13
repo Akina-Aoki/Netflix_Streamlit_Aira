@@ -1,6 +1,7 @@
 """Streamlit UI sections for the Country Insights page."""
 
 from __future__ import annotations
+
 from html import escape
 
 import pandas as pd
@@ -9,24 +10,18 @@ import streamlit as st
 from netflix.components.country_charts import build_donut_figure, build_top10_bar_figure
 from netflix.components.filters import render_labeled_selectbox
 from netflix.components.html_templates import render_html_template
-from netflix.components.title_profile import (
-    get_all_title_profile_options,
-    render_title_profile_section,
-)
-from netflix.components.visuals import render_selected_title_market_analytics
-from netflix.utils.country_insights import (
-    available_filter_options,
-    build_country_top10_chart_df,
-    build_films_tv_counts,
-    build_filter_context_title,
-)
+from netflix.components.title_profile import (get_all_title_profile_options,render_title_profile_section,)
+from netflix.components.title_analytics import render_selected_title_market_analytics
+from netflix.utils.country_insights import (available_filter_options, build_country_top10_chart_df, build_films_tv_counts, build_filter_context_title,)
 from netflix.utils.helpers import get_country_df, get_global_df, get_metadata_df
 
 
 def render_card_header(title: str, subtitle: str | None = None) -> None:
     """Render a reusable card title block above Streamlit chart containers."""
     subtitle_html = (
-        f'<div class="country-card-subtitle">{escape(subtitle)}</div>' if subtitle else ""      
+        f'<div class="country-card-subtitle">{escape(subtitle)}</div>'
+        if subtitle
+        else ""
     )
     render_html_template("card_header.html", title=title, subtitle_html=subtitle_html)
 
@@ -157,8 +152,12 @@ def render_title_profile_explorer_section() -> str | None:
         return None
 
     default_index = next(
-        (i for i, title in enumerate(all_titles) if title.casefold() == "stranger things"),
-        0,
+        (
+            i
+            for i, title in enumerate(all_titles)
+            if title.casefold() == "stranger things"
+        ),
+         0,
     )
     with st.container(border=True):
         selected_title = render_title_selectbox(

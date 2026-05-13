@@ -35,10 +35,12 @@ def _escape_context(template: str, context: dict[str, Any]) -> dict[str, str]:
     return escaped
 
 
-def render_html_template(template_name: str, **context: Any) -> None:
-    """Render an HTML template with escaped context through Streamlit markdown."""
+def format_html_template(template_name: str, **context: Any) -> str:
+    """Return an escaped, formatted HTML template string."""
     template = load_html_template(template_name)
-    st.markdown(
-        template.format(**_escape_context(template, context)),
-        unsafe_allow_html=True,
-    )
+    return template.format(**_escape_context(template, context))
+
+
+def render_html_template(template_name: str, **context: Any) -> None:
+    """Render an escaped HTML template through Streamlit's HTML element."""
+    st.html(format_html_template(template_name, **context))

@@ -1056,3 +1056,26 @@ li[role="option"]:hover {
   color: var(--streamly-primary);
   font-weight: 800;
 }
+
+.author-credit-card {
+  background: linear-gradient(90deg, rgba(247, 185, 82, 0.10) 0%, rgba(232, 98, 42, 0.08) 100%);
+  border: 1px solid #5A3B18;
+  border-left: 4px solid var(--streamly-primary);
+  border-radius: 10px;
+  color: var(--streamly-text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-top: 0.75rem;
+  max-width: 460px;
+  padding: 0.9rem 1rem;
+}
+
+.author-credit-title {
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.author-credit-link {
+  color: var(--streamly-primary) !important;
+  text-decoration: none !important;
+}
