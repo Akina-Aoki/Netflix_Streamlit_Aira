@@ -1,6 +1,5 @@
 # ---------------------------------------------------------
-# helpers.py
-# Syfte: Hjälpfunktioner för fil-läsning och datainsamling
+# Helper functions for file reading and data loading.
 # ---------------------------------------------------------
 
 import warnings
@@ -11,19 +10,19 @@ from netflix.utils.constants import DATA_PATH
 
 
 def read_textfile(path):
-    """Funktion för att läsa in vilken fil som helst"""
+    """Read any text file from disk"""
     with open(path) as file:
 
         return file.read()
 
 
 def read_css(path):
-    """Funktionen läser in CSS och injicerar i streamlit"""
+    """Load CSS and inject it into Streamlit"""
     css = read_textfile(path)
 
     st.write(
-        f"<style>{css}</style>",  # slår in CSS i HTML style-tagg
-        unsafe_allow_html=True,  # Krävs - Streamlit blockerar annars HTML
+        f"<style>{css}</style>",  
+        unsafe_allow_html=True, 
     )
 
 
@@ -40,21 +39,21 @@ def _read_excel_with_default_style_warning_suppressed(path):
 
 @st.cache_data
 def get_weekly_df():
-    """Läser in global_weekly Excel-data"""
+    """Load global weekly Excel data"""
     return _read_excel_with_default_style_warning_suppressed(
         DATA_PATH / "global_weekly.xlsx"
     )
 
 @st.cache_data
 def get_alltime_df():
-    """Läser in global_alltime Excel-data"""
+    """Load global all-time Excel data."""
     return _read_excel_with_default_style_warning_suppressed(
         DATA_PATH / "global_alltime.xlsx"
     )
 
 @st.cache_data
 def get_global_df():
-    """Läser in normaliserad global data"""
+    """Load normalized global data"""
     return pd.read_csv(DATA_PATH / "FactGlobal_Final.csv")
 
 
@@ -176,7 +175,7 @@ def prepare_country_reach_data(
 
 @st.cache_data
 def get_metadata_df():
-    """Läser in metadata med posters, trailers o beskrivningar"""
+    """Load metadata with posters, trailers, and descriptions"""
     return pd.read_csv(DATA_PATH / "DimMetaData_Final.csv")
 
 
