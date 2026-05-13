@@ -1,7 +1,9 @@
 """Shared Streamly branding components."""
 
+from html import escape
 import streamlit as st
 
+from netflix.components.html_templates import render_html_template
 from netflix.utils.constants import IMAGE_PATH
 
 
@@ -12,37 +14,22 @@ def render_streamly_banner(width: int = 200) -> None:
     """Render the Streamly logo, caption, and divider used across pages."""
     logo_path = IMAGE_PATH / STREAMLY_LOGO_FILENAME
 
-    # Fall back to text branding if the image file is not available.
-    st.markdown('<div class="streamly-banner">', unsafe_allow_html=True)
     if logo_path.exists():
         st.image(str(logo_path), width=width)
     else:
-        st.markdown(
-            '<div class="streamly-logo-fallback">Streamly</div>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown(
-        """
-        <div class="streamly-brand-caption">Global Netflix viewing statistics</div>
-        <div class="streamly-divider"></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        render_html_template("streamly_logo_fallback.html")
+    render_html_template("streamly_banner_close.html")
 
 
 def render_page_header(title: str, subtitle: str | None = None) -> None:
     """Render a branded Streamly page title and optional subtitle."""
     subtitle_html = (
-        f'<div class="streamly-page-subtitle">{subtitle}</div>' if subtitle else ""
+        f'<div class="streamly-page-subtitle">{escape(subtitle)}</div>'
+        if subtitle
+        else ""
     )
-    st.markdown(
-        f"""
-        <div class="streamly-page-header">
-            <div class="streamly-page-title">{title}</div>
-            {subtitle_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
+    render_html_template(
+        "streamly_page_header.html",
+        title=title,
+        subtitle_html=subtitle_html,
     )

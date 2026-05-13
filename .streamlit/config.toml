@@ -1,6 +1,6 @@
 [theme]
-primaryColor                ="#F7B952"
-backgroundColor             ="#0F0D0B"
-secondaryBackgroundColor    ="#1A1612"
-textColor                   ="#F5F0E8"
-font                        ="Segoe UI"
+primaryColor = "#F7B952"
+backgroundColor = "#0F0D0B"
+secondaryBackgroundColor = "#1A1612"
+textColor = "#F5F0E8"
+font = "sans serif"

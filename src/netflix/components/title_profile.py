@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import html
 import math
 from typing import Any
 
 import pandas as pd
 import streamlit as st
+
+from netflix.components.html_templates import format_html_template, render_html_template
 
 
 MISSING_POSTER_URL = "https://placehold.co/500x750/1A1612/F7B952?text=No+Poster"
@@ -80,6 +81,7 @@ def format_rating_stars(rating: Any) -> tuple[str, str]:
     stars = "★" * filled_stars + "☆" * (5 - filled_stars)
     return stars, f"{numeric_rating:.1f} / 10"
 
+
 def get_all_title_profile_options(
     profile_df: pd.DataFrame | None,
     global_df: pd.DataFrame | None = None,
@@ -103,6 +105,7 @@ def get_all_title_profile_options(
 
     unique_titles = {title.casefold(): title for title in title_values}
     return sorted(unique_titles.values(), key=lambda title: title.casefold())
+
 
 def get_title_profile_data(
     title: str,
@@ -217,52 +220,62 @@ def calculate_title_kpis(records_df: pd.DataFrame | None, title: str) -> dict[st
     }
 
 
+def _render_genre_pills(genres: list[str]) -> str:
+    """Return genre pill HTML for the selected title profile."""
+    if not genres:
+        return format_html_template(
+            "title_profile_genre_pill.html",
+            genre="Genre unavailable",
+            muted_class=" muted",
+        )
+    return "".join(
+        format_html_template(
+            "title_profile_genre_pill.html",
+            genre=genre,
+            muted_class="",
+        )
+        for genre in genres
+    )
+
+
+def _render_trailer_action(trailer_url: str) -> str:
+    """Return the trailer CTA or disabled unavailable pill HTML."""
+    if trailer_url:
+        return format_html_template(
+            "title_profile_trailer_button.html",
+            trailer_url=trailer_url,
+        )
+    return format_html_template("title_profile_trailer_unavailable.html")
+
+
 def render_title_hero(profile: dict[str, Any]) -> None:
     """Render the poster/title/metadata hero block for one title."""
-    display_title = html.escape(profile.get("display_title", "Selected title"))
-    poster_url = html.escape(profile.get("image") or MISSING_POSTER_URL)
-    description = html.escape(
+    display_title = profile.get("display_title", "Selected title")
+    poster_url = profile.get("image") or MISSING_POSTER_URL
+    description = (
         profile.get("description") or "No description available for this title."
     )
     genres = format_genres(profile.get("genres"))
-    genre_html = (
-        "".join(
-            f'<span class="title-profile-genre-pill">{html.escape(genre)}</span>'
-            for genre in genres
-        )
-        or '<span class="title-profile-genre-pill muted">Genre unavailable</span>'
-    )
+    genre_html = _render_genre_pills(genres)
+
     
     stars, rating_label = format_rating_stars(profile.get("rating"))
-    rating_html = f'<span class="title-profile-stars">{stars}</span>' if stars else ""
-    trailer_url = _clean_text(profile.get("trailer"))
-    if trailer_url:
-        trailer_html = (
-            f'<a class="title-profile-trailer-button" href="{html.escape(trailer_url)}" '
-            'target="_blank" rel="noopener noreferrer">▶ Play Trailer</a>'
-        )
-    else:
-        trailer_html = '<span class="title-profile-trailer-button disabled">Trailer unavailable</span>'
+    rating_html = (
+        format_html_template("title_profile_rating_stars.html", stars=stars)
+        if stars
+        else ""
+    )
 
-    st.markdown(
-        f"""
-        <div class="title-profile-hero">
-            <div class="title-profile-poster-card">
-                <img class="title-profile-poster" src="{poster_url}" alt="Poster for {display_title}">
-            </div>
-            <div class="title-profile-content">
-                <div class="title-profile-eyebrow">Selected Title Profile</div>
-                <h2>{display_title}</h2>
-                <div class="title-profile-genres">{genre_html}</div>
-                <div class="title-profile-rating">
-                    {rating_html}<span>{html.escape(rating_label)}</span>
-                </div>
-                <p class="title-profile-description">{description}</p>
-                <div class="title-profile-actions">{trailer_html}</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    trailer_html = _render_trailer_action(_clean_text(profile.get("trailer")))
+    render_html_template(
+        "title_profile_hero.html",
+        poster_url=poster_url,
+        display_title=display_title,
+        genre_html=genre_html,
+        rating_html=rating_html,
+        rating_label=rating_label,
+        description=description,
+        trailer_html=trailer_html,
     )
 
 
@@ -272,6 +285,7 @@ def render_title_kpi_cards(kpis: dict[str, str]) -> None:
     def display_kpi_value(value: Any) -> str:
         """Keep incomplete KPI values user-friendly instead of blank/None."""
         return "N/A" if _is_missing(value) else str(value)
+    
     cards = [
         ("Weeks in Top 10", display_kpi_value(kpis.get("weeks_in_top_10"))),
         ("Last Global Rank", display_kpi_value(kpis.get("last_global_rank"))),
@@ -279,16 +293,10 @@ def render_title_kpi_cards(kpis: dict[str, str]) -> None:
         ("Best Global Rank", display_kpi_value(kpis.get("best_global_rank"))),
     ]
     cards_html = "".join(
-        f"""
-        <div class="title-profile-kpi-card">
-            <div class="title-profile-kpi-label">{html.escape(label)}</div>
-            <div class="title-profile-kpi-value">{html.escape(str(value))}</div>
-        </div>
-        """
+        format_html_template("title_profile_kpi_card.html", label=label, value=value)
         for label, value in cards
     )
-    st.html(f'<div class="title-profile-kpi-grid">{cards_html}</div>')
-
+    render_html_template("title_profile_kpi_grid.html", cards_html=cards_html)
 
 def render_title_profile_section(
     title: str,
