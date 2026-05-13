@@ -30,11 +30,27 @@ def apply_clean_axis_style(fig: go.Figure) -> go.Figure:
     return fig
 
 
+def apply_no_grid_style(fig: go.Figure) -> go.Figure:
+    """Remove gridlines and zero lines from chart axes."""
+    fig.update_xaxes(showgrid=False, zeroline=False)
+    fig.update_yaxes(showgrid=False, zeroline=False)
+    return fig
+
+def apply_clean_chart_axes(fig: go.Figure) -> go.Figure:
+    """Remove noisy axis titles while keeping useful x-axis tick labels."""
+    fig.update_xaxes(title_text=None)
+    fig.update_yaxes(title_text=None)
+    return apply_no_grid_style(fig)
+
+
+def apply_clean_axis_style(fig: go.Figure) -> go.Figure:
+    """Backward-compatible alias for the shared clean chart axis style."""
+    return apply_clean_chart_axes(fig)
+
 def apply_hidden_y_axis_style(fig: go.Figure) -> go.Figure:
     """Hide y-axis labels for compact popularity charts."""
     fig.update_yaxes(title_text=None, showticklabels=False, showgrid=False, zeroline=False)
     return fig
-
 
 def build_top10_bar_figure(chart_df: pd.DataFrame) -> go.Figure:
     """Build the selected country's Top 10 horizontal bar chart."""
@@ -117,10 +133,9 @@ def build_popularity_year_figure(yearly_df: pd.DataFrame) -> go.Figure:
         hover_data={"year": True, "metric_value": ":,.0f", "bar_color": False},
     )
     fig.update_traces(text=None, texttemplate=None, cliponaxis=False)
-    fig.update_layout(height=360, showlegend=False)
+    fig.update_layout(height=360, showlegend=False, title="Popularity Per Year")
     fig.update_xaxes(type="category")
-    return apply_hidden_y_axis_style(apply_clean_axis_style(apply_streamly_chart_theme(fig)))
-
+    return apply_hidden_y_axis_style(apply_clean_chart_axes(apply_streamly_chart_theme(fig)))
 
 def build_popularity_month_figure(monthly_df: pd.DataFrame, month_order: list[str]) -> go.Figure:
     """Build the Title Profile monthly popularity bar chart."""
@@ -132,9 +147,9 @@ def build_popularity_month_figure(monthly_df: pd.DataFrame, month_order: list[st
         hover_data={"month_name": True, "metric_value": ":,.0f", "month_num": False},
     )
     fig.update_traces(text=None, texttemplate=None, cliponaxis=False)
-    fig.update_layout(height=390, showlegend=False)
+    fig.update_layout(height=390, showlegend=False, title="Popularity By Month")
     fig.update_xaxes(categoryorder="array", categoryarray=month_order)
-    return apply_hidden_y_axis_style(apply_clean_axis_style(apply_streamly_chart_theme(fig)))
+    return apply_hidden_y_axis_style(apply_clean_chart_axes(apply_streamly_chart_theme(fig)))
 
 
 def build_popularity_week_figure(weekly_df: pd.DataFrame, *, show_all_months: bool) -> go.Figure:
@@ -150,9 +165,9 @@ def build_popularity_week_figure(weekly_df: pd.DataFrame, *, show_all_months: bo
     fig.update_traces(
         line=dict(width=3), marker=dict(size=7), text=None, texttemplate=None
     )
-    fig.update_layout(height=390, showlegend=False)
+    fig.update_layout(height=390, showlegend=False, title="Popularity By Week")
     if show_all_months:
         fig.update_xaxes(dtick="M1", tickformat="%b")
     else:
         fig.update_xaxes(nticks=6, tickformat="%b %-d")
-    return apply_hidden_y_axis_style(apply_clean_axis_style(apply_streamly_chart_theme(fig)))
+    return apply_hidden_y_axis_style(apply_clean_chart_axes(apply_streamly_chart_theme(fig)))

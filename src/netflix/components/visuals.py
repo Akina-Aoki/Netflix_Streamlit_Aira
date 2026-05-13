@@ -7,11 +7,10 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from netflix.components.country_charts import (build_popularity_month_figure, build_popularity_week_figure, build_popularity_year_figure,)
+from netflix.components.html_templates import load_html_template, render_html_template
 from netflix.components.theme import NORDIC_COUNTRIES, NORDIC_FLAGS, STREAMLY_COLORS
 from netflix.utils.country_insights import (build_title_monthly_popularity_df, build_title_weekly_popularity_df, build_title_yearly_popularity_df, prepare_title_time_df, resolve_title_metric,)
 from netflix.utils.helpers import get_country_df, prepare_country_reach_data
-
-PAGE_COLORS = STREAMLY_COLORS
 
 
 def _iso2_to_iso3(iso2_code: str) -> str | None:
@@ -67,25 +66,25 @@ def make_country_choropleth(df: pd.DataFrame, selected_country: str):
         custom_data=custom_data,
         color="is_selected",
         color_continuous_scale=[
-            PAGE_COLORS["muted"],
-            PAGE_COLORS["yellow"],
+            STREAMLY_COLORS["muted"],
+            STREAMLY_COLORS["yellow"],
         ],
         range_color=(0, 1),
     )
 
     fig.update_layout(
         margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor=PAGE_COLORS["card"],
-        plot_bgcolor=PAGE_COLORS["card"],
+        paper_bgcolor=STREAMLY_COLORS["card"],
+        plot_bgcolor=STREAMLY_COLORS["card"],
         font=dict(
-            color=PAGE_COLORS["text"],
+            color=STREAMLY_COLORS["text"],
             family="Segoe UI, sans-serif",
         ),
         coloraxis_showscale=False,
         geo=dict(
             showframe=False,
             showcoastlines=False,
-            bgcolor=PAGE_COLORS["card"],
+            bgcolor=STREAMLY_COLORS["card"],
             projection_type="natural earth",
         ),
         height=360,
@@ -187,25 +186,25 @@ def make_country_reach_map(country_reach_df: pd.DataFrame):
         hover_name="country_name",
         custom_data=custom_data,
         color="reached",
-        color_continuous_scale=[PAGE_COLORS["orange"], PAGE_COLORS["yellow"]],
+        color_continuous_scale=[STREAMLY_COLORS["orange"], STREAMLY_COLORS["yellow"]],
         range_color=(0, 1),
     )
 
     fig.update_layout(
         height=430,
         margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor=PAGE_COLORS["card"],
-        plot_bgcolor=PAGE_COLORS["card"],
+        paper_bgcolor=STREAMLY_COLORS["card"],
+        plot_bgcolor=STREAMLY_COLORS["card"],
         font=dict(
-            color=PAGE_COLORS["text"],
+            color=STREAMLY_COLORS["text"],
             family="Segoe UI, sans-serif",
         ),
         coloraxis_showscale=False,
         geo=dict(
-            bgcolor=PAGE_COLORS["card"],
+            bgcolor=STREAMLY_COLORS["card"],
             landcolor="#2A2118",
-            lakecolor=PAGE_COLORS["card"],
-            oceancolor=PAGE_COLORS["card"],
+            lakecolor=STREAMLY_COLORS["card"],
+            oceancolor=STREAMLY_COLORS["card"],
             projection_type="natural earth",
             showcoastlines=False,
             showcountries=True,
@@ -244,14 +243,10 @@ def render_title_selector_tiles(
         is_selected = st.session_state[key] == title
         with column:
             selected_class = "market-reach-tile-selected" if is_selected else ""
-            safe_title = html.escape(title)
-            st.markdown(
-                f"""
-                <div class="market-reach-tile {selected_class}">
-                    <span>{safe_title}</span>
-                </div>
-                """,
-                unsafe_allow_html=True,
+            render_html_template(
+                "market_reach_tile.html",
+                selected_class=selected_class,
+                title=title,
             )
             if st.button(
                 "Selected" if is_selected else "View reach",
@@ -274,17 +269,13 @@ def render_single_title_market_reach(
 ) -> None:
     """Render Market Reach for one selected title across all country data."""
     if show_header:
-        st.markdown(
-            """
-            <section class="market-reach-section">
-                <div class="home-section-title">Market Reach</div>
-                <div class="home-section-subtitle">
-                    See how widely this title reached Netflix Top 10 markets across
-                    all available country-level data.
-                </div>
-            </section>
-            """,
-            unsafe_allow_html=True,
+        render_html_template(
+            "market_reach_section.html",
+            title="Market Reach",
+            subtitle=(
+                "See how widely this title reached Netflix Top 10 markets across "
+                "all available country-level data."
+            ),
         )
 
 
@@ -315,27 +306,18 @@ def render_single_title_market_reach(
         selected_title=title_name,
     )
 
-    st.markdown(
-        f"""
-        <div class="market-reach-kpi-card">
-            <div class="success-kpi-label">Countries Reached</div>
-            <div class="success-kpi-value">{country_reach:,}</div>
-            <div class="home-kpi-note">
-                Unique markets where this title appeared in the Netflix Top 10.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    render_html_template(
+        "kpi_card.html",
+        label="Countries Reached",
+        value=f"{country_reach:,}",
+        note="Unique markets where this title appeared in the Netflix Top 10.",
     )
 
     if country_reach_df.empty:
         st.warning("No market reach data available for this title.")
         return
 
-    st.markdown(
-        '<div class="market-reach-map-heading">Reached markets map</div>',
-        unsafe_allow_html=True,
-    )
+    render_html_template("market_map_heading.html", title="Reached markets map")
     map_fig = make_country_reach_map(country_reach_df)
 
     if map_fig is not None:
@@ -344,10 +326,7 @@ def render_single_title_market_reach(
         st.info("Map data is unavailable for the selected title.")
 
     if show_country_table:
-        st.markdown(
-            '<div class="market-reach-map-heading">Reached countries</div>',
-            unsafe_allow_html=True,
-        )
+        render_html_template("market_map_heading.html", title="Reached countries")
         st.dataframe(
             pd.DataFrame({"Country": country_names}),
             width="stretch",
@@ -382,7 +361,7 @@ def render_nordic_ranking_for_title(
         required_columns = {"country_name", "weekly_rank", "year"}
         title_df = prepare_title_time_df(title_name, country_df)
         if title_df.empty or not required_columns.issubset(title_df.columns):
-            st.info("no_data_message")
+            st.info(no_data_message)
             return
         
         title_df["weekly_rank"] = pd.to_numeric(title_df["weekly_rank"], errors="coerce")
@@ -417,18 +396,18 @@ def render_nordic_ranking_for_title(
         )
 
         rows = []
+        row_template = load_html_template("nordic_rank_row.html")
         for country_name in NORDIC_COUNTRIES:
             flag = NORDIC_FLAGS.get(country_name, "")
             best_rank = lookup.get(country_name)
             rank_label = f"#{int(best_rank)}" if pd.notna(best_rank) else "No data"
             muted_class = " market-rank-row-muted" if pd.isna(best_rank) else ""
             rows.append(
-                (
-                    f'<div class="market-rank-row{muted_class}">'
-                    f'<div class="market-rank-country"><span>{flag}</span>'
-                    f'<strong>{html.escape(country_name)}</strong></div>'
-                    f'<div class="market-rank-value">{rank_label}</div>'
-                    '</div>'
+                row_template.format(
+                    muted_class=html.escape(muted_class),
+                    flag=html.escape(flag),
+                    country_name=html.escape(country_name),
+                    rank_label=html.escape(rank_label),
                 )
             )
 
@@ -570,17 +549,13 @@ def render_selected_title_market_analytics(
 
 def render_country_reach_section(visible_titles: list[str]) -> None:
     """Render Market Reach for the titles visible in Success Profile."""
-    st.markdown(
-        """
-        <section class="market-reach-section">
-            <div class="home-section-title">Market Reach</div>
-            <div class="home-section-subtitle">
-                See how widely the selected Success Profile title reached
-                Netflix Top 10 markets across all available country-level data.
-            </div>
-        </section>
-        """,        
-        unsafe_allow_html=True,
+    render_html_template(
+        "market_reach_section.html",
+        title="Market Reach",
+        subtitle=(
+            "See how widely the selected Success Profile title reached Netflix Top 10 "
+            "markets across all available country-level data."
+        ),
     )
     selected_title = render_title_selector_tiles(visible_titles)
 

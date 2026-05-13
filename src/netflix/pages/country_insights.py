@@ -58,8 +58,6 @@ def country_insights() -> None:
         selected_category=selected_category,
     )
 
-    
-
     render_section_divider()
     selected_profile_title = render_title_profile_explorer_section()
     render_market_reach_analytics_section(selected_profile_title)

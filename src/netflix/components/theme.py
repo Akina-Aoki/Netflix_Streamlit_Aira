@@ -24,6 +24,8 @@ CHART_FONT = {
     "family": "Segoe UI, sans-serif",
 }
 
+NORDIC_COUNTRIES = ["Sweden", "Norway", "Denmark", "Finland", "Iceland"]
+
 NORDIC_FLAGS = {
     "Sweden": "🇸🇪",
     "Norway": "🇳🇴",

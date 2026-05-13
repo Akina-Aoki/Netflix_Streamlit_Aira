@@ -1,14 +1,14 @@
 """Streamlit UI sections for the Country Insights page."""
 
 from __future__ import annotations
-
-import html
+from html import escape
 
 import pandas as pd
 import streamlit as st
 
 from netflix.components.country_charts import build_donut_figure, build_top10_bar_figure
 from netflix.components.filters import render_labeled_selectbox
+from netflix.components.html_templates import render_html_template
 from netflix.components.title_profile import (
     get_all_title_profile_options,
     render_title_profile_section,
@@ -26,40 +26,19 @@ from netflix.utils.helpers import get_country_df, get_global_df, get_metadata_df
 def render_card_header(title: str, subtitle: str | None = None) -> None:
     """Render a reusable card title block above Streamlit chart containers."""
     subtitle_html = (
-        f'<div class="country-card-subtitle">{html.escape(subtitle)}</div>'
-        if subtitle
-        else ""
+        f'<div class="country-card-subtitle">{escape(subtitle)}</div>' if subtitle else ""      
     )
-    st.markdown(
-        f"""
-        <div class="country-card-heading">
-            <div class="country-card-title">{html.escape(title)}</div>
-            {subtitle_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    render_html_template("card_header.html", title=title, subtitle_html=subtitle_html)
 
 
 def render_section_heading(title: str, subtitle: str) -> None:
     """Render a larger section title for Country Insights feature sections."""
-    st.markdown(
-        f"""
-        <div class="country-section-heading">
-            <div class="country-section-title">{html.escape(title)}</div>
-            <div class="country-section-subtitle">{html.escape(subtitle)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    render_html_template("section_heading.html", title=title, subtitle=subtitle)
 
 
 def render_section_divider() -> None:
     """Render a visual separator before Country Insights sections."""
-    st.markdown(
-        '<div class="country-home-section-divider" aria-hidden="true"></div>',
-        unsafe_allow_html=True,
-    )
+    render_html_template("section_divider.html")
 
 
 def render_title_selectbox(
@@ -69,10 +48,7 @@ def render_title_selectbox(
     index: int = 0,
 ) -> str:
     """Render a searchable title selector with Country Insights card-title styling."""
-    st.markdown(
-        f'<div class="country-card-title country-selector-title">{html.escape(label)}</div>',
-        unsafe_allow_html=True,
-    )
+    render_html_template("title_selector_label.html", label=label)
     return st.selectbox(
         label,
         options,
@@ -123,16 +99,10 @@ def render_country_filters(weekly_df: pd.DataFrame) -> tuple[str, int, str, str]
 def _render_donut_stats(counts_df: pd.DataFrame) -> None:
     """Render Films and TV counts beside the donut chart."""
     counts = counts_df.set_index("category")["title_count"].to_dict()
-    st.markdown(
-        f"""
-        <div class="country-donut-stat">
-            <span>Films</span><strong>{int(counts.get("Films", 0))}</strong>
-        </div>
-        <div class="country-donut-stat">
-            <span>TV</span><strong>{int(counts.get("TV", 0))}</strong>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    render_html_template(
+        "donut_stats.html",
+        films_count=int(counts.get("Films", 0)),
+        tv_count=int(counts.get("TV", 0)),
     )
 
 
