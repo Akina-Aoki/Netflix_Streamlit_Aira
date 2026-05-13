@@ -3,6 +3,10 @@
 </p>
 
 <p align="center">
+  <img src="src/netflix/assets/image/about_app.png" alt="About this app section" width="850">
+</p>
+
+<p align="center">
   <a href="https://netflix-top10-tudum-analysis.streamlit.app/">
     Open the Streamlit app
   </a>
