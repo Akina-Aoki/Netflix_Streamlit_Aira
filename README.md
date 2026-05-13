@@ -2,6 +2,10 @@
 
 [Open the Streamlit app](https://netflix-top10-tudum-analysis.streamlit.app/)
 
+## Demo Video
+[Netflix_Streamlit_Aira.webm](https://github.com/user-attachments/assets/3cab68be-c002-4193-b723-66efc442b02b)
+
+
 Streamly is a Streamlit dashboard that explores Netflix Top 10 / Tudum data. It helps users see which films and TV series perform well globally, how titles trend in different countries, and what kind of success pattern a title has.
 
 I built this project from a Data Engineering and DRY (Don't Repeat Yourself) perspective: prepare the data, create reusable transformations, and present the results in a dashboard that is simple to use and easy to explain.
