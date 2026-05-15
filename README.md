@@ -12,6 +12,12 @@
   </a>
 </p>
 
+<p align="center">
+  <a href="https://dataengineeringlearning.hashnode.dev/netflix-analytics-dashboard-with-streamlit?utm_source=hashnode&utm_medium=feed">
+    <img src="https://img.shields.io/badge/Read%20the%20Blog%20✨-FFB84D?style=for-the-badge&logo=hashnode&logoColor=white&labelColor=0F0D0B" alt="Read the Streamly Blog">
+  </a>
+</p>
+
 ## 🎬 Demo Video
 [Netflix_Streamlit_Aira.webm](https://github.com/user-attachments/assets/3cab68be-c002-4193-b723-66efc442b02b)
 
